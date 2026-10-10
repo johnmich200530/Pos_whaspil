@@ -6,30 +6,29 @@ use App\Models\Menu;
 use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class MenuController extends Controller
 {
     use \App\Http\Controllers\Concerns\LogsAudit;
 
     /**
-     * Upload an image — uses Cloudinary when CLOUDINARY_URL is set,
-     * otherwise falls back to local public disk so the app never crashes.
+     * Upload an image to Cloudinary (preferred) or local disk as fallback.
      */
     private function uploadImage($file): string
     {
-        if (config('cloudinary.cloud_url') || env('CLOUDINARY_URL')) {
-            try {
-                $uploaded = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload(
-                    $file->getRealPath(),
-                    ['folder' => 'menu-images']
-                );
-                return $uploaded->getSecurePath();
-            } catch (\Throwable $e) {
-                // Cloudinary failed — fall through to local storage
-                \Illuminate\Support\Facades\Log::warning('Cloudinary upload failed, using local storage: ' . $e->getMessage());
-            }
+        $cloudinaryUrl = config('cloudinary.cloud_url');
+
+        if (!empty($cloudinaryUrl)) {
+            $uploaded = Cloudinary::upload($file->getRealPath(), [
+                'folder' => 'menu-images',
+            ]);
+            return $uploaded->getSecurePath();
         }
 
+        // Fallback: local public disk
+        Log::warning('CLOUDINARY_URL not set — storing image locally.');
         return $file->store('menu-images', 'public');
     }
 
@@ -41,9 +40,9 @@ class MenuController extends Controller
         if (str_contains($path, 'cloudinary.com')) {
             try {
                 $publicId = pathinfo(parse_url($path, PHP_URL_PATH), PATHINFO_FILENAME);
-                \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::destroy('menu-images/' . $publicId);
+                Cloudinary::destroy('menu-images/' . $publicId);
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('Cloudinary delete failed: ' . $e->getMessage());
+                Log::warning('Cloudinary delete failed: ' . $e->getMessage());
             }
         } else {
             Storage::disk('public')->delete($path);

@@ -12,6 +12,9 @@ mkdir -p /var/www/html/bootstrap/cache
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
+# Clear config cache so Render's env vars (CLOUDINARY_URL etc.) are always picked up fresh
+php /var/www/html/artisan config:clear
+
 # Recreate the storage symlink at runtime (persistent disk is now mounted)
 rm -f /var/www/html/public/storage
 php /var/www/html/artisan storage:link --force
