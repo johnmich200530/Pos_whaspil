@@ -6,6 +6,7 @@ use App\Models\Menu;
 use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class MenuController extends Controller
 {
@@ -31,7 +32,10 @@ class MenuController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('menu-images', 'public');
+            $uploaded  = Cloudinary::upload($request->file('image')->getRealPath(), [
+                'folder' => 'menu-images',
+            ]);
+            $imagePath = $uploaded->getSecurePath();
         }
 
         $isDrinks = strcasecmp($validated['category'], 'Drinks') === 0;
@@ -71,10 +75,18 @@ class MenuController extends Controller
         $data['Inventory_ID'] = $isDrinks ? (($validated['inventory_id'] ?? null) ?: null) : null;
 
         if ($request->hasFile('image')) {
-            if ($menu->Image) {
+            // Delete old image from Cloudinary if it's a Cloudinary URL
+            if ($menu->Image && str_contains($menu->Image, 'cloudinary.com')) {
+                $publicId = pathinfo(parse_url($menu->Image, PHP_URL_PATH), PATHINFO_FILENAME);
+                Cloudinary::destroy('menu-images/' . $publicId);
+            } elseif ($menu->Image) {
+                // Legacy local storage image
                 Storage::disk('public')->delete($menu->Image);
             }
-            $data['Image'] = $request->file('image')->store('menu-images', 'public');
+            $uploaded       = Cloudinary::upload($request->file('image')->getRealPath(), [
+                'folder' => 'menu-images',
+            ]);
+            $data['Image']  = $uploaded->getSecurePath();
         }
 
         $menu->update($data);
@@ -86,7 +98,12 @@ class MenuController extends Controller
     {
         $name = $menu->Name;
         if ($menu->Image) {
-            Storage::disk('public')->delete($menu->Image);
+            if (str_contains($menu->Image, 'cloudinary.com')) {
+                $publicId = pathinfo(parse_url($menu->Image, PHP_URL_PATH), PATHINFO_FILENAME);
+                Cloudinary::destroy('menu-images/' . $publicId);
+            } else {
+                Storage::disk('public')->delete($menu->Image);
+            }
         }
         $menu->delete();
         $this->audit('menu.deleted', 'Menu item deleted: ' . $name, $name);

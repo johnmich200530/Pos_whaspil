@@ -76,7 +76,7 @@
                 >
                     <div class="menu-card-img">
                         @if($item->Image)
-                            <img src="{{ asset('storage/'.$item->Image) }}"
+                            <img src="{{ str_starts_with($item->Image, 'http') ? $item->Image : asset('storage/'.$item->Image) }}"
                                  alt="{{ $item->Name }}"
                                  style="width:100%;height:100%;object-fit:cover;display:block;">
                         @else

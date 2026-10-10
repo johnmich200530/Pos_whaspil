@@ -32,7 +32,7 @@
         <div class="inv-row" data-name="{{ strtolower($m->Name) }}">
             <div class="menu-thumb-wrap">
                 @if($m->Image)
-                    <img src="{{ asset('storage/'.$m->Image) }}" class="menu-thumb" alt="{{ $m->Name }}">
+                    <img src="{{ str_starts_with($m->Image, 'http') ? $m->Image : asset('storage/'.$m->Image) }}" class="menu-thumb" alt="{{ $m->Name }}">
                 @else
                     <div class="menu-thumb-placeholder">
                         <i data-lucide="utensils" style="width:22px;height:22px;color:var(--muted)"></i>
@@ -58,7 +58,7 @@
                         '{{ addslashes($m->Category) }}',
                         {{ $m->Availability ? 1 : 0 }},
                         {{ $m->Inventory_ID ?? 'null' }},
-                        '{{ $m->Image ? asset('storage/'.$m->Image) : '' }}'
+                        '{{ $m->Image ? (str_starts_with($m->Image, 'http') ? $m->Image : asset('storage/'.$m->Image)) : '' }}'
                     )"><i data-lucide="pencil"></i></button>
                 <form method="POST" action="{{ route('menu.destroy', $m) }}"
                       onsubmit="return confirm('Remove {{ addslashes($m->Name) }}?')">
