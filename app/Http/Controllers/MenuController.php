@@ -7,7 +7,6 @@ use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class MenuController extends Controller
 {
@@ -21,10 +20,10 @@ class MenuController extends Controller
         $cloudinaryUrl = config('cloudinary.cloud_url');
 
         if (!empty($cloudinaryUrl)) {
-            $uploaded = Cloudinary::upload($file->getRealPath(), [
-                'folder' => 'menu-images',
-            ]);
-            return $uploaded->getSecurePath();
+            $result = app(\Cloudinary\Cloudinary::class)
+                ->uploadApi()
+                ->upload($file->getRealPath(), ['folder' => 'menu-images']);
+            return $result['secure_url'];
         }
 
         // Fallback: local public disk
@@ -39,8 +38,13 @@ class MenuController extends Controller
     {
         if (str_contains($path, 'cloudinary.com')) {
             try {
-                $publicId = pathinfo(parse_url($path, PHP_URL_PATH), PATHINFO_FILENAME);
-                Cloudinary::destroy('menu-images/' . $publicId);
+                // Extract public_id: folder/filename (no extension)
+                $urlPath  = parse_url($path, PHP_URL_PATH);
+                // Path looks like /f5batbz6/image/upload/v123/menu-images/filename.jpg
+                // public_id = menu-images/filename
+                preg_match('#/upload/(?:v\d+/)?(.+)\.[a-z]+$#i', $urlPath, $matches);
+                $publicId = $matches[1] ?? pathinfo($urlPath, PATHINFO_FILENAME);
+                app(\Cloudinary\Cloudinary::class)->uploadApi()->destroy($publicId);
             } catch (\Throwable $e) {
                 Log::warning('Cloudinary delete failed: ' . $e->getMessage());
             }
