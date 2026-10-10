@@ -6,11 +6,49 @@ use App\Models\Menu;
 use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class MenuController extends Controller
 {
     use \App\Http\Controllers\Concerns\LogsAudit;
+
+    /**
+     * Upload an image — uses Cloudinary when CLOUDINARY_URL is set,
+     * otherwise falls back to local public disk so the app never crashes.
+     */
+    private function uploadImage($file): string
+    {
+        if (config('cloudinary.cloud_url') || env('CLOUDINARY_URL')) {
+            try {
+                $uploaded = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::upload(
+                    $file->getRealPath(),
+                    ['folder' => 'menu-images']
+                );
+                return $uploaded->getSecurePath();
+            } catch (\Throwable $e) {
+                // Cloudinary failed — fall through to local storage
+                \Illuminate\Support\Facades\Log::warning('Cloudinary upload failed, using local storage: ' . $e->getMessage());
+            }
+        }
+
+        return $file->store('menu-images', 'public');
+    }
+
+    /**
+     * Delete an image from wherever it was stored.
+     */
+    private function deleteImage(string $path): void
+    {
+        if (str_contains($path, 'cloudinary.com')) {
+            try {
+                $publicId = pathinfo(parse_url($path, PHP_URL_PATH), PATHINFO_FILENAME);
+                \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::destroy('menu-images/' . $publicId);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Cloudinary delete failed: ' . $e->getMessage());
+            }
+        } else {
+            Storage::disk('public')->delete($path);
+        }
+    }
 
     public function index()
     {
@@ -32,10 +70,7 @@ class MenuController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $uploaded  = Cloudinary::upload($request->file('image')->getRealPath(), [
-                'folder' => 'menu-images',
-            ]);
-            $imagePath = $uploaded->getSecurePath();
+            $imagePath = $this->uploadImage($request->file('image'));
         }
 
         $isDrinks = strcasecmp($validated['category'], 'Drinks') === 0;
@@ -75,18 +110,10 @@ class MenuController extends Controller
         $data['Inventory_ID'] = $isDrinks ? (($validated['inventory_id'] ?? null) ?: null) : null;
 
         if ($request->hasFile('image')) {
-            // Delete old image from Cloudinary if it's a Cloudinary URL
-            if ($menu->Image && str_contains($menu->Image, 'cloudinary.com')) {
-                $publicId = pathinfo(parse_url($menu->Image, PHP_URL_PATH), PATHINFO_FILENAME);
-                Cloudinary::destroy('menu-images/' . $publicId);
-            } elseif ($menu->Image) {
-                // Legacy local storage image
-                Storage::disk('public')->delete($menu->Image);
+            if ($menu->Image) {
+                $this->deleteImage($menu->Image);
             }
-            $uploaded       = Cloudinary::upload($request->file('image')->getRealPath(), [
-                'folder' => 'menu-images',
-            ]);
-            $data['Image']  = $uploaded->getSecurePath();
+            $data['Image'] = $this->uploadImage($request->file('image'));
         }
 
         $menu->update($data);
@@ -98,12 +125,7 @@ class MenuController extends Controller
     {
         $name = $menu->Name;
         if ($menu->Image) {
-            if (str_contains($menu->Image, 'cloudinary.com')) {
-                $publicId = pathinfo(parse_url($menu->Image, PHP_URL_PATH), PATHINFO_FILENAME);
-                Cloudinary::destroy('menu-images/' . $publicId);
-            } else {
-                Storage::disk('public')->delete($menu->Image);
-            }
+            $this->deleteImage($menu->Image);
         }
         $menu->delete();
         $this->audit('menu.deleted', 'Menu item deleted: ' . $name, $name);
