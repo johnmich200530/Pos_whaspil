@@ -43,16 +43,15 @@ RUN npm install && npm run build
 RUN php artisan config:clear \
 && php artisan route:clear \
 && php artisan view:clear
-# Create storage symlink
-RUN php artisan storage:link || true
-# Fix permissions
+# Fix permissions (build-time only, persistent disk not mounted yet)
 RUN mkdir -p storage/framework/cache storage/framework/sessions \
 storage/framework/views bootstrap/cache public/uploads \
 && chown -R www-data:www-data storage bootstrap/cache public/uploads \
 && chmod -R 775 storage bootstrap/cache public/uploads
-# (Optional) Run migrations
-RUN php artisan migrate --force || true
+# Copy and prepare startup script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 # Expose port
 EXPOSE 10000
-# Start Apache
-CMD ["apache2-foreground"]
+# Run startup script (storage:link and migrate happen at runtime after disk is mounted)
+CMD ["/start.sh"]
