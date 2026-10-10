@@ -7,9 +7,9 @@
                   && in_array(session('pos_employee')->Role, ['cashier','manager']);
 @endphp
 
-<div class="new-order-layout" style="align-items:flex-start">
+<div class="new-order-layout" style="align-items:flex-start;justify-content:center">
 
-    <div class="new-order-left" style="max-width:560px">
+    <div class="new-order-left" style="max-width:560px;width:100%">
 
         <div class="page-header">
             <div class="header-left">
