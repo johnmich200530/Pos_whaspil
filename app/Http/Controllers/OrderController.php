@@ -30,7 +30,7 @@ class OrderController extends Controller
 
     public function create()
     {
-        $menus = Menu::where('Availability', true)->get()
+        $menus = Menu::orderBy('Name')->get()
             ->groupBy('Category')
             ->sortKeys(SORT_NATURAL | SORT_FLAG_CASE);
         $categories = $menus->keys();

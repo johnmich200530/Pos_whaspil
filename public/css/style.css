@@ -1050,22 +1050,23 @@ input[type=radio]:checked + .method-btn {
 
 /* Menu card out-of-stock / low-stock */
 .menu-card--out {
-  opacity: .6;
+  opacity: .55;
 }
 
 .menu-card-out-badge {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(231,76,60,.9);
+  background: rgba(231,76,60,.92);
   color: #fff;
-  font-size: .62rem;
+  font-size: .65rem;
   font-weight: 800;
-  letter-spacing: .06em;
-  padding: 3px 8px;
+  letter-spacing: .07em;
+  padding: 4px 10px;
   border-radius: 4px;
   white-space: nowrap;
   pointer-events: none;
+  z-index: 2;
 }
 
 .menu-card-low-badge {

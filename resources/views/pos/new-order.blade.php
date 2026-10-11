@@ -82,10 +82,10 @@
                         @else
                             <div class="menu-card-emoji">{{ str_contains(strtolower($item->Category), 'drink') ? '🥤' : (str_contains(strtolower($item->Category), 'dessert') ? '🍮' : '🍽️') }}</div>
                         @endif
-                        @if($notAvailable)
-                            <div class="menu-card-out-badge">NOT AVAILABLE</div>
-                        @endif
                     </div>
+                    @if($notAvailable)
+                        <div class="menu-card-out-badge">NOT AVAILABLE</div>
+                    @endif
                     <div class="menu-card-body">
                         <div class="menu-card-name">{{ $item->Name }}</div>
                         <div class="menu-card-price">₱{{ number_format($item->Price, 2) }}</div>
