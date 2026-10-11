@@ -21,13 +21,13 @@
     @endif
 
     <form method="GET" action="{{ route('inventory.index') }}" class="search-bar">
-        <input type="text" name="search" class="search-input" placeholder="Search stock…" value="{{ $search ?? '' }}">
-        <button type="submit" class="btn-secondary btn-sm">Search</button>
+        <input type="text" id="invSearch" name="search" class="search-input" placeholder="Search stock…"
+               value="{{ $search ?? '' }}" oninput="searchInventory()" autocomplete="off">
     </form>
 
     <div class="inventory-list" style="margin-top:8px">
         @forelse($inventories as $inv)
-        <div class="inv-row">
+        <div class="inv-row" data-name="{{ strtolower($inv->Name) }}">
             <div class="inv-info">
                 <div class="inv-name">{{ $inv->Name }}</div>
                 <div class="inv-unit">{{ $inv->Unit }}</div>
@@ -161,6 +161,13 @@
         document.getElementById('editQty').value   = qty;
         document.getElementById('editUnit').value  = unit;
         openModal('editModal');
+    }
+
+    function searchInventory() {
+        const q = document.getElementById('invSearch').value.toLowerCase();
+        document.querySelectorAll('.inventory-list .inv-row').forEach(row => {
+            row.style.display = row.dataset.name.includes(q) ? '' : 'none';
+        });
     }
 </script>
 @endpush
