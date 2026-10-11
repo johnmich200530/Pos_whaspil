@@ -307,7 +307,7 @@
                                 <span class="order-type-chip order-type-chip--${typeClass}">${typeLabel}</span>
                                 <span class="status-badge status-${o.status}">${o.status.charAt(0).toUpperCase()+o.status.slice(1)}</span>
                             </div>
-                            <div class="order-time" style="${isCashier ? 'margin-right:32px' : ''}">${o.time} · ${o.updated_at}</div>
+                            <div class="order-time" style="${isCashier ? 'padding-right:28px' : ''}">${o.time} · ${o.updated_at}</div>
                         </div>
                         <div class="order-card-items">${o.items_count} item(s) · ₱${parseFloat(o.total).toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
                         <div class="order-card-footer">${chips}${extra}</div>

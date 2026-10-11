@@ -932,8 +932,9 @@ input[type="password"]::-webkit-textfield-decoration-container {
 /* ── Select checkbox (inside card, top-right) ────── */
 .order-cb-label {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
   z-index: 2;
   cursor: pointer;
   line-height: 0;
