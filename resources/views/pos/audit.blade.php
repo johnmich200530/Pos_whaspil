@@ -21,7 +21,7 @@
             <div style="display:flex;align-items:center;gap:8px;background:var(--dark3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;flex:1;min-width:160px">
                 <input type="text" name="search" id="auditSearch" placeholder="Filter by keyword…"
                        class="form-input" style="background:none;border:none;padding:0;font-size:.88rem;box-shadow:none"
-                       value="{{ request('search') }}">
+                       value="{{ request('search') }}" autocomplete="off">
             </div>
             <div style="display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)">
                 Filter by type:
@@ -37,7 +37,6 @@
                     <option value="auth"      {{ request('type') === 'auth'      ? 'selected' : '' }}>Login / Logout</option>
                 </select>
             </div>
-            <button type="submit" class="btn-primary btn-sm" style="width:auto">Search</button>
             @if(request('search') || request('type'))
                 <a href="{{ route('audit.index') }}" class="btn-secondary btn-sm" style="width:auto;margin-top:0">Clear</a>
             @endif
@@ -156,9 +155,13 @@
 
 @push('scripts')
 <script>
-    // Submit search on Enter key
-    document.getElementById('auditSearch').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('auditFilterForm').submit();
+    // Auto-submit search after user stops typing (400ms debounce)
+    let auditSearchTimer;
+    document.getElementById('auditSearch').addEventListener('input', function () {
+        clearTimeout(auditSearchTimer);
+        auditSearchTimer = setTimeout(() => {
+            document.getElementById('auditFilterForm').submit();
+        }, 400);
     });
 </script>
 @endpush
