@@ -18,9 +18,10 @@ class InventoryController extends Controller
             ->orderBy('Name')
             ->get();
 
-        $lowCount = Inventory::whereIn('Status', ['low_stock', 'out_of_stock'])->count();
+        $lowCount  = Inventory::where('Status', 'low_stock')->count();
+        $outCount  = Inventory::where('Status', 'out_of_stock')->count();
 
-        return view('pos.inventory', compact('inventories', 'lowCount', 'search'));
+        return view('pos.inventory', compact('inventories', 'lowCount', 'outCount', 'search'));
     }
 
     public function store(Request $request)
