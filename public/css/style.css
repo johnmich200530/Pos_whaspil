@@ -101,6 +101,25 @@ input[type="password"]::-webkit-textfield-decoration-container {
   border-radius: 2px;
   transition: all .2s;
 }
+#navToggle.nav-hidden { display: none; }
+
+/* Return / close arrow inside side nav (mobile only) */
+.nav-close-btn {
+  display: none;
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 40px; height: 40px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  color: var(--text);
+  cursor: pointer;
+  z-index: 160;
+}
+.nav-close-icon { width: 20px; height: 20px; }
 
 /* Mobile overlay */
 .nav-overlay {
@@ -1791,6 +1810,7 @@ input[type=radio]:checked + .method-btn {
     z-index: 150;
   }
   .side-nav.open { transform: translateX(0); }
+  .side-nav.open .nav-close-btn { display: flex; }
 
   .page-wrapper {
     margin-left: 0;

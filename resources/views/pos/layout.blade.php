@@ -20,6 +20,11 @@
 <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
 
 <nav class="side-nav" id="sideNav">
+    {{-- Close / return arrow (mobile) --}}
+    <button class="nav-close-btn" onclick="closeNav()" aria-label="Close menu">
+        <i data-lucide="arrow-left" class="nav-close-icon"></i>
+    </button>
+
     {{-- Logo --}}
     <div class="side-nav-logo">
         <img src="/images/whaspil_logo.png" alt="Whaspil" class="side-nav-logo-img">
@@ -134,12 +139,17 @@
     if (toast) setTimeout(() => toast.classList.add('toast-hide'), 3000);
 
     function toggleNav() {
-        document.getElementById('sideNav').classList.toggle('open');
+        const nav = document.getElementById('sideNav');
+        const btn = document.getElementById('navToggle');
+        nav.classList.toggle('open');
         document.getElementById('navOverlay').classList.toggle('show');
+        if (btn) btn.classList.toggle('nav-hidden', nav.classList.contains('open'));
     }
     function closeNav() {
         document.getElementById('sideNav').classList.remove('open');
         document.getElementById('navOverlay').classList.remove('show');
+        const btn = document.getElementById('navToggle');
+        if (btn) btn.classList.remove('nav-hidden');
     }
 </script>
 @stack('scripts')
