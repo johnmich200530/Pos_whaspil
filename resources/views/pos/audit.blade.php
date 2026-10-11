@@ -103,28 +103,13 @@
         @php
             $current = $logs->currentPage();
             $last    = $logs->lastPage();
+            $slots   = [];
 
-            // Always render exactly: Prev | 1 | 2 | 3 | ... | last | Next
-            // Window: show up to 3 pages around current, always show first and last
-            // Build a fixed set of slots to prevent layout shift
-
-            $slots = [];
-
-            if ($last <= 7) {
-                // Not enough pages to need ellipsis — show all
+            if ($last <= 11) {
                 for ($i = 1; $i <= $last; $i++) $slots[] = $i;
             } else {
-                // Always: 1, 2, 3, [window around current], last-2, last-1, last
-                // Simplified: first 1, window of 3 centered on current, last 1
-                $slots[] = 1;
-
-                $winStart = max(2, $current - 1);
-                $winEnd   = min($last - 1, $current + 1);
-
-                if ($winStart > 2)       $slots[] = '...';
-                for ($i = $winStart; $i <= $winEnd; $i++) $slots[] = $i;
-                if ($winEnd < $last - 1) $slots[] = '...';
-
+                for ($i = 1; $i <= 10; $i++) $slots[] = $i;
+                $slots[] = '...';
                 $slots[] = $last;
             }
         @endphp
