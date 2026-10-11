@@ -10,7 +10,7 @@ class AuditController extends Controller
     {
         $logs = AuditLog::with('employee')
             ->orderByDesc('created_at')
-            ->paginate(50);
+            ->paginate(12);
 
         return view('pos.audit', compact('logs'));
     }
