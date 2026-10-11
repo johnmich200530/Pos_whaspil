@@ -91,7 +91,7 @@
         <div id="cmGcashFields" style="display:none">
             @if($gcashQr)
             <div class="gcash-qr-wrap">
-                <img src="{{ asset('storage/'.$gcashQr) }}" alt="GCash QR" class="gcash-qr-img">
+                <img src="{{ str_starts_with($gcashQr, 'http') ? $gcashQr : asset('storage/'.$gcashQr) }}" alt="GCash QR" class="gcash-qr-img">
                 <div class="gcash-qr-label" id="cmGcashLabel">Scan to pay</div>
             </div>
             @else

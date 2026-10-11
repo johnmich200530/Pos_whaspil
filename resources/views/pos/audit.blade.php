@@ -10,21 +10,18 @@
         </div>
     </div>
 
-    <div style="padding:14px 16px 6px">
-        <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">
-            A history of all actions performed in the system — who did what and when.
-        </p>
+    <div style="padding:14px 0 6px">
 
         {{-- Filters --}}
         <form method="GET" action="{{ route('audit.index') }}" id="auditFilterForm"
-              style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <div style="display:flex;align-items:center;gap:8px;background:var(--dark3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;flex:1;min-width:160px">
-                <input type="text" name="search" id="auditSearch" placeholder="Filter by keyword…"
-                       class="form-input" style="background:none;border:none;padding:0;font-size:.88rem;box-shadow:none"
+              style="display:flex;flex-direction:column;gap:8px">
+            <div class="search-bar" style="margin-bottom:0">
+                <input type="text" name="search" id="auditSearch" class="search-input"
+                       placeholder="Search audit log…"
                        value="{{ request('search') }}" autocomplete="off">
             </div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)">
-                Filter by type:
+            <div style="display:flex;align-items:center;gap:8px;padding:0 16px;flex-wrap:wrap">
+                <span style="font-size:.82rem;color:var(--muted);white-space:nowrap">Filter by type:</span>
                 <select name="type" id="auditType" class="form-input"
                         style="width:auto;padding:7px 10px;font-size:.85rem"
                         onchange="this.form.submit()">
@@ -36,10 +33,10 @@
                     <option value="employee"  {{ request('type') === 'employee'  ? 'selected' : '' }}>Employees</option>
                     <option value="auth"      {{ request('type') === 'auth'      ? 'selected' : '' }}>Login / Logout</option>
                 </select>
+                @if(request('search') || request('type'))
+                    <a href="{{ route('audit.index') }}" style="font-size:.82rem;color:var(--muted);text-decoration:underline">Clear filters</a>
+                @endif
             </div>
-            @if(request('search') || request('type'))
-                <a href="{{ route('audit.index') }}" class="btn-secondary btn-sm" style="width:auto;margin-top:0">Clear</a>
-            @endif
         </form>
     </div>
 

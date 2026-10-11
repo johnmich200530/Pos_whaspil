@@ -148,7 +148,8 @@
                 <div id="gcashFields" style="display:none">
                     @if($gcashQr)
                     <div class="gcash-qr-wrap">
-                        <img src="{{ asset('storage/'.$gcashQr) }}" alt="GCash QR" class="gcash-qr-img"
+                        <img src="{{ str_starts_with($gcashQr, 'http') ? $gcashQr : asset('storage/'.$gcashQr) }}"
+                             alt="GCash QR" class="gcash-qr-img"
                              title="Click to change QR"
                              onclick="document.getElementById('gcashQrInput').click()">
                         <div class="gcash-qr-label">Scan to pay ₱{{ number_format($order->Total_Amount, 2) }}</div>
