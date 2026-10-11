@@ -178,6 +178,11 @@ class OrderController extends Controller
             return back()->with('error', 'Cannot revert a served order back to ' . $new . '.');
         }
 
+        // Cannot cancel an order that is already preparing or served
+        if ($new === 'cancelled' && in_array($order->Status, ['preparing', 'served'])) {
+            return back()->with('error', 'Cannot cancel an order that is already ' . $order->Status . '.');
+        }
+
         $order->update(['Status' => $new]);
 
         if ($new === 'cancelled') {

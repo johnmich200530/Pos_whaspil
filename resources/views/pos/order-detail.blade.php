@@ -79,8 +79,8 @@
                     </button>
                 </form>
                 @endforeach
-                {{-- Cancel — separate with confirmation + redirect to active orders --}}
-                @if(session('pos_employee')->Role !== 'chef')
+                {{-- Cancel — only allowed on pending orders, not once preparing/served --}}
+                @if(session('pos_employee')->Role !== 'chef' && !in_array($order->Status, ['preparing','served']))
                 <form method="POST" action="{{ route('orders.status', $order) }}"
                       onsubmit="return confirm('Cancel this order? This cannot be undone.')">
                     @csrf @method('PATCH')
