@@ -32,7 +32,6 @@
             </div>
             <div class="inv-right">
                 <span class="badge badge-role">{{ ucfirst($emp->Role) }}</span>
-                <span class="inv-unit">{{ $emp->orders_count }} orders</span>
             </div>
             <div class="inv-actions">
                 <button class="btn-icon"
