@@ -1215,6 +1215,35 @@ input[type=radio]:checked + .method-btn {
   color: var(--text);
 }
 
+/* ---- Searchable inventory dropdown ---- */
+.inv-search-wrap {
+  position: relative;
+}
+
+.inv-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--dark2);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+
+.inv-dropdown-item {
+  padding: 9px 12px;
+  font-size: .85rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .15s;
+}
+.inv-dropdown-item:hover { background: var(--dark3); }
+
 .gcash-no-qr {
   background: rgba(245,197,24,.1);
   border: 1px solid rgba(245,197,24,.3);

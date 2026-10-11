@@ -118,14 +118,23 @@
                 <label class="form-label">Link to Inventory
                     <span style="color:#888;font-size:.78rem">(Drinks only — stock auto-deducts on order)</span>
                 </label>
-                <select name="inventory_id" id="addInv" class="form-input">
-                    <option value="">No link</option>
-                    @foreach($inventories as $inv)
-                    <option value="{{ $inv->Inventory_ID }}">
-                        {{ $inv->Name }} — {{ $inv->Quantity }} {{ $inv->Unit }}
-                    </option>
-                    @endforeach
-                </select>
+                <div class="inv-search-wrap" id="addInvWrap">
+                    <input type="hidden" name="inventory_id" id="addInvId">
+                    <input type="text" id="addInvSearch" class="form-input" placeholder="Search inventory…"
+                           autocomplete="off" oninput="filterInvDropdown('add')" onfocus="openInvDropdown('add')"
+                           onblur="setTimeout(()=>closeInvDropdown('add'),150)">
+                    <div class="inv-dropdown" id="addInvDropdown" style="display:none">
+                        <div class="inv-dropdown-item" data-id="" onmousedown="selectInv('add','','No link')">No link</div>
+                        @foreach($inventories as $inv)
+                        <div class="inv-dropdown-item"
+                             data-id="{{ $inv->Inventory_ID }}"
+                             data-label="{{ $inv->Name }} — {{ $inv->Quantity }} {{ $inv->Unit }}"
+                             onmousedown="selectInv('add','{{ $inv->Inventory_ID }}','{{ addslashes($inv->Name) }} — {{ $inv->Quantity }} {{ $inv->Unit }}')">
+                            {{ $inv->Name }} — {{ $inv->Quantity }} {{ $inv->Unit }}
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
             </div>
             {{-- Image upload --}}
             <div class="form-group">
@@ -198,14 +207,23 @@
                 <label class="form-label">Link to Inventory
                     <span style="color:#888;font-size:.78rem">(Drinks only — stock auto-deducts on order)</span>
                 </label>
-                <select name="inventory_id" id="emInv" class="form-input">
-                    <option value="">No link</option>
-                    @foreach($inventories as $inv)
-                    <option value="{{ $inv->Inventory_ID }}">
-                        {{ $inv->Name }} — {{ $inv->Quantity }} {{ $inv->Unit }}
-                    </option>
-                    @endforeach
-                </select>
+                <div class="inv-search-wrap" id="editInvWrap">
+                    <input type="hidden" name="inventory_id" id="editInvId">
+                    <input type="text" id="editInvSearch" class="form-input" placeholder="Search inventory…"
+                           autocomplete="off" oninput="filterInvDropdown('edit')" onfocus="openInvDropdown('edit')"
+                           onblur="setTimeout(()=>closeInvDropdown('edit'),150)">
+                    <div class="inv-dropdown" id="editInvDropdown" style="display:none">
+                        <div class="inv-dropdown-item" data-id="" onmousedown="selectInv('edit','','No link')">No link</div>
+                        @foreach($inventories as $inv)
+                        <div class="inv-dropdown-item"
+                             data-id="{{ $inv->Inventory_ID }}"
+                             data-label="{{ $inv->Name }} — {{ $inv->Quantity }} {{ $inv->Unit }}"
+                             onmousedown="selectInv('edit','{{ $inv->Inventory_ID }}','{{ addslashes($inv->Name) }} — {{ $inv->Quantity }} {{ $inv->Unit }}')">
+                            {{ $inv->Name }} — {{ $inv->Quantity }} {{ $inv->Unit }}
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
             </div>
             {{-- Image upload --}}
             <div class="form-group">
@@ -247,9 +265,39 @@
     function toggleInvLink(which, cat) {
         const isDrinks = (cat || '').toLowerCase() === 'drinks';
         const group = document.getElementById(which === 'add' ? 'addInvLinkGroup' : 'editInvLinkGroup');
-        const select = document.getElementById(which === 'add' ? 'addInv' : 'emInv');
         group.style.display = isDrinks ? '' : 'none';
-        if (!isDrinks) select.value = '';
+        if (!isDrinks) {
+            selectInv(which, '', 'No link');
+        }
+    }
+
+    // ── Searchable inventory dropdown ────────────────────────────
+    function openInvDropdown(which) {
+        const dd = document.getElementById(which === 'add' ? 'addInvDropdown' : 'editInvDropdown');
+        dd.style.display = 'block';
+        filterInvDropdown(which);
+    }
+
+    function closeInvDropdown(which) {
+        const dd = document.getElementById(which === 'add' ? 'addInvDropdown' : 'editInvDropdown');
+        dd.style.display = 'none';
+    }
+
+    function filterInvDropdown(which) {
+        const input = document.getElementById(which === 'add' ? 'addInvSearch' : 'editInvSearch');
+        const dd    = document.getElementById(which === 'add' ? 'addInvDropdown' : 'editInvDropdown');
+        const q     = input.value.toLowerCase();
+        dd.style.display = 'block';
+        dd.querySelectorAll('.inv-dropdown-item').forEach(item => {
+            const label = item.dataset.label || item.textContent;
+            item.style.display = !q || label.toLowerCase().includes(q) ? '' : 'none';
+        });
+    }
+
+    function selectInv(which, id, label) {
+        document.getElementById(which === 'add' ? 'addInvId'     : 'editInvId').value     = id;
+        document.getElementById(which === 'add' ? 'addInvSearch' : 'editInvSearch').value = id ? label : '';
+        closeInvDropdown(which);
     }
 
     function applyMenuFilters() {
@@ -305,8 +353,17 @@
         document.getElementById('emName').value        = name;
         document.getElementById('emPrice').value       = price;
         document.getElementById('emCat').value         = cat;
-        document.getElementById('emInv').value         = invId || '';
         toggleInvLink('edit', cat);
+
+        // Set searchable inventory dropdown
+        if (invId) {
+            const item = document.querySelector(`#editInvDropdown [data-id="${invId}"]`);
+            const label = item ? (item.dataset.label || item.textContent.trim()) : '';
+            selectInv('edit', invId, label);
+        } else {
+            selectInv('edit', '', 'No link');
+        }
+
         document.getElementById('emAvailYes').checked  = avail == 1;
         document.getElementById('emAvailNo').checked   = avail != 1;
 
