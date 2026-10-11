@@ -31,17 +31,21 @@
 
     {{-- Combined payment bar (cashier/manager only) --}}
     @if(in_array(session('pos_employee')->Role, ['cashier','manager']))
-    <div id="combineBar" style="display:none;position:sticky;top:0;z-index:50;background:var(--dark2);border-bottom:1px solid var(--border);padding:10px 16px;display:none;align-items:center;gap:12px;flex-wrap:wrap">
-        <span style="font-size:.85rem;color:var(--muted)" id="combineInfo">0 orders selected</span>
-        <span style="font-weight:700;color:var(--gold)" id="combineTotalDisplay">₱0.00</span>
-        <button onclick="openCombineModal()" id="combineBtn" class="btn-primary btn-sm" disabled>
-            Pay Selected
-        </button>
-        <button onclick="clearSelection()" class="btn-secondary btn-sm">Clear</button>
+    <div id="combineBar" style="display:none;position:sticky;top:0;z-index:50;background:var(--dark2);border-bottom:1px solid var(--border);padding:10px 16px;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:.85rem;color:var(--muted)" id="combineInfo">0 orders selected</span>
+            <span style="font-weight:700;color:var(--gold)" id="combineTotalDisplay">₱0.00</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+            <button onclick="openCombineModal()" id="combineBtn" class="btn-primary btn-sm" disabled>
+                Pay Selected
+            </button>
+            <button onclick="clearSelection()" class="btn-secondary btn-sm">Clear</button>
+        </div>
     </div>
     @endif
 
-    <div id="ordersContainer" style="padding:0 16px">
+    <div id="ordersContainer" style="padding:0 16px;margin-top:8px">
         {{-- Populated by JS polling --}}
     </div>
 
