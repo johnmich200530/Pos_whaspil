@@ -37,10 +37,12 @@
             <span style="font-weight:700;color:var(--gold)" id="combineTotalDisplay">₱0.00</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-            <button onclick="openCombineModal()" id="combineBtn" class="btn-primary btn-sm" disabled>
+            <button onclick="openCombineModal()" id="combineBtn" class="btn-primary btn-sm" disabled
+                    style="margin:0;line-height:1">
                 Pay Selected
             </button>
-            <button onclick="clearSelection()" class="btn-secondary btn-sm">Clear</button>
+            <button onclick="clearSelection()" class="btn-secondary btn-sm"
+                    style="margin:0;line-height:1">Clear</button>
         </div>
     </div>
     @endif

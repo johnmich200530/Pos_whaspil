@@ -461,13 +461,13 @@ input[type="password"]::-webkit-textfield-decoration-container {
 
 .btn-sm {
   width: auto;
-  padding: 8px 14px;
+  padding: 9px 14px;
   font-size: .82rem;
   border-radius: var(--radius-sm);
 }
 
 .btn-primary.btn-sm {
-  padding: 10px 14px;
+  padding: 9px 14px;
 }
 
 .btn-clear { background: none; color: var(--gold); font-weight: 700; font-size: .8rem; }
