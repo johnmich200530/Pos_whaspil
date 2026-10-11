@@ -1893,3 +1893,10 @@ input[type=radio]:checked + .method-btn {
   color: var(--muted);
   padding: 4px 16px 12px;
 }
+
+/* ---- Locked status button (e.g. can't revert served → pending/preparing) ---- */
+.status-btn-locked {
+  opacity: .35;
+  cursor: not-allowed;
+  pointer-events: none;
+}

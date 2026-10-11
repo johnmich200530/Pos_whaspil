@@ -65,10 +65,16 @@
             <div class="detail-card-title">Update Status</div>
             <div class="status-btn-row">
                 @foreach(['pending','preparing','served'] as $s)
+                @php
+                    $isLocked = $order->Status === 'served' && in_array($s, ['pending','preparing']);
+                @endphp
                 <form method="POST" action="{{ route('orders.status', $order) }}">
                     @csrf @method('PATCH')
                     <input type="hidden" name="status" value="{{ $s }}">
-                    <button type="submit" class="status-upd-btn {{ $order->Status === $s ? 'active-status' : '' }}">
+                    <button type="submit"
+                            class="status-upd-btn {{ $order->Status === $s ? 'active-status' : '' }} {{ $isLocked ? 'status-btn-locked' : '' }}"
+                            {{ $isLocked ? 'disabled' : '' }}
+                            title="{{ $isLocked ? 'Cannot revert a served order' : '' }}">
                         {{ ucfirst($s) }}
                     </button>
                 </form>

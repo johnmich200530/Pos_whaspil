@@ -171,9 +171,16 @@ class OrderController extends Controller
             'status' => 'required|in:pending,preparing,served,paid,cancelled',
         ]);
 
-        $order->update(['Status' => $validated['status']]);
+        $new = $validated['status'];
 
-        if ($validated['status'] === 'cancelled') {
+        // Once served, can only move forward (paid/cancelled) — not back to pending/preparing
+        if ($order->Status === 'served' && in_array($new, ['pending', 'preparing'])) {
+            return back()->with('error', 'Cannot revert a served order back to ' . $new . '.');
+        }
+
+        $order->update(['Status' => $new]);
+
+        if ($new === 'cancelled') {
             // Restore inventory for all items in the cancelled order
             $order->load('orderItems.menu.inventory');
             foreach ($order->orderItems as $item) {
@@ -194,7 +201,7 @@ class OrderController extends Controller
             return redirect()->route('orders.active')->with('success', 'Order cancelled.');
         }
 
-        $this->audit('order.status', 'Order status updated to ' . $validated['status'] . ' for ' . $order->Table_number, $order->Table_number);
+        $this->audit('order.status', 'Order status updated to ' . $new . ' for ' . $order->Table_number, $order->Table_number);
         return back()->with('success', 'Order status updated.');
     }
 
