@@ -100,6 +100,25 @@
         </table>
 
         @if($logs->hasPages())
+        @php
+            $current  = $logs->currentPage();
+            $last     = $logs->lastPage();
+            $window   = 2; // pages around current
+            $pages    = [];
+
+            // Always show first 2 pages
+            for ($i = 1; $i <= min(2, $last); $i++) $pages[] = $i;
+
+            // Window around current
+            for ($i = max(3, $current - $window); $i <= min($last - 1, $current + $window); $i++) $pages[] = $i;
+
+            // Always show last page
+            if ($last > 2) $pages[] = $last;
+
+            $pages = array_unique($pages);
+            sort($pages);
+        @endphp
+
         <div style="margin-top:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.85rem">
             {{-- Previous --}}
             @if($logs->onFirstPage())
@@ -108,13 +127,19 @@
                 <a href="{{ $logs->previousPageUrl() }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none">‹ Prev</a>
             @endif
 
-            {{-- Page numbers --}}
-            @foreach($logs->getUrlRange(1, $logs->lastPage()) as $page => $url)
-                @if($page == $logs->currentPage())
+            {{-- Page numbers with ellipsis --}}
+            @php $prev = null; @endphp
+            @foreach($pages as $page)
+                @if($prev !== null && $page - $prev > 1)
+                    <span style="padding:5px 6px;color:var(--muted)">…</span>
+                @endif
+
+                @if($page == $current)
                     <span style="padding:5px 10px;border-radius:6px;background:var(--green);color:#fff;font-weight:600">{{ $page }}</span>
                 @else
-                    <a href="{{ $url }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none">{{ $page }}</a>
+                    <a href="{{ $logs->url($page) }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none">{{ $page }}</a>
                 @endif
+                @php $prev = $page; @endphp
             @endforeach
 
             {{-- Next --}}
