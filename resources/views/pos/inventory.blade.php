@@ -142,19 +142,11 @@
                 <label class="form-label">Category</label>
                 <select name="category" class="form-input" required>
                     <option value="" disabled selected>Select…</option>
-                    <option value="Drinks">Drinks</option>
-                    <option value="Rice">Rice</option>
-                    <option value="Pork">Pork</option>
-                    <option value="Chicken">Chicken</option>
-                    <option value="Sizzling">Sizzling</option>
-                    <option value="Appitizer">Appitizer</option>
-                    <option value="Hipon">Hipon</option>
-                    <option value="Fish">Fish</option>
-                    <option value="Tinola/Sinigang">Tinola/Sinigang</option>
-                    <option value="Inihaw">Inihaw</option>
-                    <option value="Kinilaw">Kinilaw</option>
-                    <option value="Noodles">Noodles</option>
-                    <option value="Vegetable">Vegetable</option>
+                    <option value="Dairy/Frozen">Dairy/Frozen</option>
+                    <option value="Vegetables/Fresh">Vegetables/Fresh</option>
+                    <option value="Sauce/Condiments">Sauce/Condiments</option>
+                    <option value="Meat/Seafood">Meat/Seafood</option>
+                    <option value="Staples/Dry Goods">Staples/Dry Goods</option>
                 </select>
             </div>
             <div class="form-row">
@@ -205,19 +197,11 @@
                 <label class="form-label">Category</label>
                 <select name="category" id="editCategory" class="form-input">
                     <option value="">Select…</option>
-                    <option value="Drinks">Drinks</option>
-                    <option value="Rice">Rice</option>
-                    <option value="Pork">Pork</option>
-                    <option value="Chicken">Chicken</option>
-                    <option value="Sizzling">Sizzling</option>
-                    <option value="Appitizer">Appitizer</option>
-                    <option value="Hipon">Hipon</option>
-                    <option value="Fish">Fish</option>
-                    <option value="Tinola/Sinigang">Tinola/Sinigang</option>
-                    <option value="Inihaw">Inihaw</option>
-                    <option value="Kinilaw">Kinilaw</option>
-                    <option value="Noodles">Noodles</option>
-                    <option value="Vegetable">Vegetable</option>
+                    <option value="Dairy/Frozen">Dairy/Frozen</option>
+                    <option value="Vegetables/Fresh">Vegetables/Fresh</option>
+                    <option value="Sauce/Condiments">Sauce/Condiments</option>
+                    <option value="Meat/Seafood">Meat/Seafood</option>
+                    <option value="Staples/Dry Goods">Staples/Dry Goods</option>
                 </select>
             </div>
             <div class="form-row">
