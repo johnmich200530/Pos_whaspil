@@ -16,26 +16,32 @@
         </p>
 
         {{-- Filters --}}
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <div style="display:flex;align-items:center;gap:8px;background:var(--dark3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;min-width:200px">
-                <span style="color:var(--muted)"></span>
-                <input type="text" id="auditSearch" placeholder="Filter by keyword…"
+        <form method="GET" action="{{ route('audit.index') }}" id="auditFilterForm"
+              style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:8px;background:var(--dark3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;flex:1;min-width:160px">
+                <input type="text" name="search" id="auditSearch" placeholder="Filter by keyword…"
                        class="form-input" style="background:none;border:none;padding:0;font-size:.88rem;box-shadow:none"
-                       oninput="filterAudit()">
+                       value="{{ request('search') }}">
             </div>
             <div style="display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)">
                 Filter by type:
-                <select id="auditType" class="form-input" style="width:auto;padding:7px 10px;font-size:.85rem" onchange="filterAudit()">
+                <select name="type" id="auditType" class="form-input"
+                        style="width:auto;padding:7px 10px;font-size:.85rem"
+                        onchange="this.form.submit()">
                     <option value="">All</option>
-                    <option value="order">Orders</option>
-                    <option value="payment">Payments</option>
-                    <option value="menu">Menu</option>
-                    <option value="inventory">Inventory</option>
-                    <option value="employee">Employees</option>
-                    <option value="auth">Login / Logout</option>
+                    <option value="order"     {{ request('type') === 'order'     ? 'selected' : '' }}>Orders</option>
+                    <option value="payment"   {{ request('type') === 'payment'   ? 'selected' : '' }}>Payments</option>
+                    <option value="menu"      {{ request('type') === 'menu'      ? 'selected' : '' }}>Menu</option>
+                    <option value="inventory" {{ request('type') === 'inventory' ? 'selected' : '' }}>Inventory</option>
+                    <option value="employee"  {{ request('type') === 'employee'  ? 'selected' : '' }}>Employees</option>
+                    <option value="auth"      {{ request('type') === 'auth'      ? 'selected' : '' }}>Login / Logout</option>
                 </select>
             </div>
-        </div>
+            <button type="submit" class="btn-primary btn-sm" style="width:auto">Search</button>
+            @if(request('search') || request('type'))
+                <a href="{{ route('audit.index') }}" class="btn-secondary btn-sm" style="width:auto;margin-top:0">Clear</a>
+            @endif
+        </form>
     </div>
 
     {{-- Table --}}
@@ -100,44 +106,48 @@
         </table>
 
         @if($logs->hasPages())
-        @php
-            $current = $logs->currentPage();
-            $last    = $logs->lastPage();
-            $slots   = [];
-
-            if ($last <= 11) {
-                for ($i = 1; $i <= $last; $i++) $slots[] = $i;
-            } else {
-                for ($i = 1; $i <= 10; $i++) $slots[] = $i;
-                $slots[] = '...';
-                $slots[] = $last;
-            }
-        @endphp
-
-        <div style="margin-top:16px;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;font-size:.85rem">
-            {{-- Previous --}}
+        <div class="inv-pagination" style="margin-top:16px">
+            {{-- Prev --}}
             @if($logs->onFirstPage())
-                <span style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--muted);cursor:default;white-space:nowrap">‹ Prev</span>
+                <span class="inv-page-btn inv-page-btn--disabled">‹</span>
             @else
-                <a href="{{ $logs->previousPageUrl() }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none;white-space:nowrap">‹ Prev</a>
+                <a href="{{ $logs->previousPageUrl() }}" class="inv-page-btn">‹</a>
             @endif
 
+            {{-- Page numbers with ellipsis --}}
+            @php
+                $current = $logs->currentPage();
+                $last    = $logs->lastPage();
+                $slots   = [];
+                if ($last <= 7) {
+                    for ($i = 1; $i <= $last; $i++) $slots[] = $i;
+                } else {
+                    $slots[] = 1;
+                    if ($current > 3) $slots[] = '...';
+                    for ($i = max(2, $current - 1); $i <= min($last - 1, $current + 1); $i++) $slots[] = $i;
+                    if ($current < $last - 2) $slots[] = '...';
+                    $slots[] = $last;
+                }
+            @endphp
             @foreach($slots as $slot)
                 @if($slot === '...')
-                    <span style="padding:5px 6px;color:var(--muted);min-width:24px;text-align:center">…</span>
+                    <span class="inv-page-btn inv-page-btn--disabled" style="border:none;background:none">…</span>
                 @elseif($slot == $current)
-                    <span style="padding:5px 10px;border-radius:6px;background:var(--green);color:#fff;font-weight:600;min-width:32px;text-align:center">{{ $slot }}</span>
+                    <span class="inv-page-btn inv-page-btn--active">{{ $slot }}</span>
                 @else
-                    <a href="{{ $logs->url($slot) }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none;min-width:32px;text-align:center">{{ $slot }}</a>
+                    <a href="{{ $logs->url($slot) }}" class="inv-page-btn">{{ $slot }}</a>
                 @endif
             @endforeach
 
             {{-- Next --}}
             @if($logs->hasMorePages())
-                <a href="{{ $logs->nextPageUrl() }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none;white-space:nowrap">Next ›</a>
+                <a href="{{ $logs->nextPageUrl() }}" class="inv-page-btn">›</a>
             @else
-                <span style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--muted);cursor:default;white-space:nowrap">Next ›</span>
+                <span class="inv-page-btn inv-page-btn--disabled">›</span>
             @endif
+        </div>
+        <div class="inv-page-info">
+            Showing {{ $logs->firstItem() }}–{{ $logs->lastItem() }} of {{ $logs->total() }} entries
         </div>
         @endif
     </div>
@@ -146,16 +156,10 @@
 
 @push('scripts')
 <script>
-    function filterAudit() {
-        const keyword = document.getElementById('auditSearch').value.toLowerCase();
-        const type    = document.getElementById('auditType').value.toLowerCase();
-
-        document.querySelectorAll('.audit-row').forEach(row => {
-            const matchKeyword = !keyword || row.dataset.search.includes(keyword);
-            const matchType    = !type    || row.dataset.type === type;
-            row.style.display  = (matchKeyword && matchType) ? '' : 'none';
-        });
-    }
+    // Submit search on Enter key
+    document.getElementById('auditSearch').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('auditFilterForm').submit();
+    });
 </script>
 @endpush
 @endsection

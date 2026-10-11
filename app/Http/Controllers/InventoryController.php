@@ -18,7 +18,7 @@ class InventoryController extends Controller
             ->when($status && $status !== 'all', fn($q) => $q->where('Status', $status))
             ->orderBy('Status')
             ->orderBy('Name')
-            ->paginate(10)
+            ->paginate(8)
             ->withQueryString();
 
         $lowCount  = Inventory::where('Status', 'low_stock')->count();

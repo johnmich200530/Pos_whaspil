@@ -272,7 +272,7 @@
 
 @push('scripts')
 <script>
-    const MENU_PER_PAGE = 10;
+    const MENU_PER_PAGE = 6;
     let menuCurrentPage = 1;
     let menuFilteredItems = [];
 
