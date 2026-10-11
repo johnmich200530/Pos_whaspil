@@ -77,7 +77,14 @@
             </div>
         </div>
         <div id="cmGcashFields" style="display:none">
+            @if($gcashQr)
+            <div class="gcash-qr-wrap">
+                <img src="{{ asset('storage/'.$gcashQr) }}" alt="GCash QR" class="gcash-qr-img">
+                <div class="gcash-qr-label" id="cmGcashLabel">Scan to pay</div>
+            </div>
+            @else
             <p style="font-size:.82rem;color:var(--muted);text-align:center;padding:8px 0">GCash payment — total will be auto-applied.</p>
+            @endif
         </div>
         <button type="button" class="btn-primary" id="cmConfirmBtn" onclick="submitCombinedPayment()">Confirm Payment</button>
         <button type="button" class="btn-secondary" onclick="closeCombineModal()">Cancel</button>
@@ -180,6 +187,11 @@
         document.getElementById('cmTendered').value = '';
         document.getElementById('cmTendered').min = total;
         document.getElementById('cmChangeDisplay').style.display = 'none';
+        // Update GCash label if present
+        const gcashLabel = document.getElementById('cmGcashLabel');
+        if (gcashLabel) {
+            gcashLabel.textContent = 'Scan to pay ₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 });
+        }
         document.getElementById('combineModal').style.display = 'flex';
     }
 

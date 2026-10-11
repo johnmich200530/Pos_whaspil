@@ -118,7 +118,9 @@ class OrderController extends Controller
             ->orderByDesc('updated_at')
             ->get();
 
-        return view('pos.active-orders', compact('orders'));
+        $gcashQr = SettingsController::gcashQrPath();
+
+        return view('pos.active-orders', compact('orders', 'gcashQr'));
     }
 
     // JSON endpoint for real-time polling
