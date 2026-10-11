@@ -139,9 +139,23 @@
                 <input type="text" name="name" class="form-input" placeholder="e.g. Jasmine Rice" required>
             </div>
             <div class="form-group">
-                <label class="form-label">Category <span style="opacity:.6">(optional)</span></label>
-                <input type="text" name="category" class="form-input" list="invCatList"
-                       placeholder="e.g. Meat, Vegetables, Sauces" maxlength="50">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-input" required>
+                    <option value="" disabled selected>Select…</option>
+                    <option value="Drinks">Drinks</option>
+                    <option value="Rice">Rice</option>
+                    <option value="Pork">Pork</option>
+                    <option value="Chicken">Chicken</option>
+                    <option value="Sizzling">Sizzling</option>
+                    <option value="Appitizer">Appitizer</option>
+                    <option value="Hipon">Hipon</option>
+                    <option value="Fish">Fish</option>
+                    <option value="Tinola/Sinigang">Tinola/Sinigang</option>
+                    <option value="Inihaw">Inihaw</option>
+                    <option value="Kinilaw">Kinilaw</option>
+                    <option value="Noodles">Noodles</option>
+                    <option value="Vegetable">Vegetable</option>
+                </select>
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -189,7 +203,22 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Category</label>
-                <input type="text" name="category" id="editCategory" class="form-input" list="invCatList" maxlength="50">
+                <select name="category" id="editCategory" class="form-input">
+                    <option value="">Select…</option>
+                    <option value="Drinks">Drinks</option>
+                    <option value="Rice">Rice</option>
+                    <option value="Pork">Pork</option>
+                    <option value="Chicken">Chicken</option>
+                    <option value="Sizzling">Sizzling</option>
+                    <option value="Appitizer">Appitizer</option>
+                    <option value="Hipon">Hipon</option>
+                    <option value="Fish">Fish</option>
+                    <option value="Tinola/Sinigang">Tinola/Sinigang</option>
+                    <option value="Inihaw">Inihaw</option>
+                    <option value="Kinilaw">Kinilaw</option>
+                    <option value="Noodles">Noodles</option>
+                    <option value="Vegetable">Vegetable</option>
+                </select>
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -226,16 +255,6 @@
 </div>
 
 @push('scripts')
-@php
-    $catSuggestions = collect($categories ?? [])
-        ->merge(['Staples / Dry Goods', 'Meat & Seafood', 'Vegetables & Fresh', 'Sauces & Condiments', 'Dairy & Frozen', 'Drinks & Beverages'])
-        ->filter()->unique()->sort()->values();
-@endphp
-<datalist id="invCatList">
-    @foreach($catSuggestions as $cat)
-    <option value="{{ $cat }}">
-    @endforeach
-</datalist>
 <script>
     function openModal(id)  { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -245,7 +264,11 @@
         document.getElementById('editName').value  = name;
         document.getElementById('editQty').value   = qty;
         document.getElementById('editUnit').value  = unit;
-        document.getElementById('editCategory').value = category || '';
+        const catSel = document.getElementById('editCategory');
+        if (category && ![...catSel.options].some(o => o.value === category)) {
+            catSel.add(new Option(category, category));
+        }
+        catSel.value = category || '';
         openModal('editModal');
     }
 
