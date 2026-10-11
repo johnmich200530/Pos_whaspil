@@ -880,6 +880,107 @@ input[type="password"]::-webkit-textfield-decoration-container {
 .order-card-items { font-size: .83rem; color: var(--muted); margin-bottom: 8px; }
 .order-card-footer { display: flex; flex-wrap: wrap; gap: 6px; }
 
+/* ── Enhanced order card ─────────────────────────── */
+.order-card-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 10px;
+  border-radius: var(--radius);
+  transition: box-shadow .2s;
+}
+.order-card-wrap.order-card-selected {
+  box-shadow: 0 0 0 2px var(--green);
+  border-radius: var(--radius);
+}
+
+.order-card-enhanced {
+  flex: 1;
+  display: block;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  text-decoration: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.order-card-wrap.order-card-selected .order-card-enhanced {
+  border-color: var(--green);
+}
+
+.order-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.order-card-left  { display: flex; flex-direction: column; gap: 4px; }
+.order-card-right { text-align: right; flex-shrink: 0; }
+
+.order-card-table  { font-weight: 800; font-size: 1.05rem; color: var(--text); }
+.order-card-badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.order-card-amount { font-weight: 800; font-size: 1rem; color: var(--gold); }
+.order-card-time   { font-size: .73rem; color: var(--muted); margin-top: 2px; }
+.order-card-divider { height: 1px; background: var(--border); margin: 10px 0; }
+.order-card-bottom { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.order-card-count  { font-size: .78rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+
+.order-item-chip--more {
+  background: var(--dark4);
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ── Select checkbox ─────────────────────────────── */
+.order-select-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: var(--dark3);
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: var(--radius) 0 0 var(--radius);
+  transition: background .2s;
+}
+.order-select-label:hover { background: var(--dark4); }
+
+.order-select-label input[type="checkbox"] { display: none; }
+
+.order-select-box {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 5px;
+  background: var(--dark2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, border-color .15s;
+  position: relative;
+}
+.order-select-label input:checked + .order-select-box {
+  background: var(--green);
+  border-color: var(--green);
+}
+.order-select-label input:checked + .order-select-box::after {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+/* When checkbox present, adjust card border-radius */
+.order-card-wrap:has(.order-select-label) .order-card-enhanced {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
 .order-item-chip {
   background: var(--dark3);
   border: 1px solid var(--border);

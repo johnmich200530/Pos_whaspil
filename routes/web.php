@@ -55,8 +55,10 @@ Route::middleware('auth.pos')->group(function () {
 
     // Payment & Receipt — cashier, manager
     Route::middleware('pos.role:cashier,manager')->group(function () {
-        Route::post('/payments',         [PaymentController::class, 'store'])->name('payments.store');
-        Route::get('/receipt/{receipt}', [ReceiptController::class, 'show'])->name('receipt.show');
+        Route::post('/payments',          [PaymentController::class, 'store'])->name('payments.store');
+        Route::post('/payments/combine',  [PaymentController::class, 'combine'])->name('payments.combine');
+        Route::get('/receipt/{receipt}',  [ReceiptController::class, 'show'])->name('receipt.show');
+        Route::get('/receipt-combined',   [ReceiptController::class, 'combined'])->name('receipt.combined');
         Route::post('/settings/gcash-qr', [SettingsController::class, 'updateGcashQr'])->name('settings.gcash-qr');
     });
 

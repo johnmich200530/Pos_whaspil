@@ -24,4 +24,23 @@ class ReceiptController extends Controller
         $receipt->load('payment.order.orderItems.menu', 'order.employee');
         return view('pos.receipt', compact('receipt'));
     }
+
+    public function combined(Request $request)
+    {
+        $ids      = explode(',', $request->query('ids', ''));
+        $receipts = Receipt::with('payment', 'order.orderItems.menu', 'order.employee')
+            ->whereIn('Receipt_ID', $ids)
+            ->get();
+
+        if ($receipts->isEmpty()) {
+            return redirect()->route('orders.active');
+        }
+
+        $combinedTotal    = $receipts->sum('Total_Amount');
+        $amountTendered   = $receipts->sum(fn($r) => $r->payment->amount_tendered ?? 0);
+        $method           = $receipts->first()->payment->Method ?? 'cash';
+        $change           = max(0, $amountTendered - $combinedTotal);
+
+        return view('pos.receipt-combined', compact('receipts', 'combinedTotal', 'amountTendered', 'method', 'change'));
+    }
 }
