@@ -16,7 +16,7 @@
 
     @if($outCount > 0)
     <div class="alert-banner" style="background:rgba(231,76,60,.12);border-color:rgba(231,76,60,.4);color:#e74c3c">
-        <strong>{{ $outCount }} item(s) are out of stock</strong> — linked menu items have been disabled
+        <strong>{{ $outCount }} item(s) are out of stock</strong>
     </div>
     @endif
     @if($lowCount > 0)
