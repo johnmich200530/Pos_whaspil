@@ -2,7 +2,7 @@
 
 @section('content')
 @php
-    $showPayment = !in_array($order->Status, ['paid','cancelled'])
+    $showPayment = $order->Status === 'served'
                   && !$order->payment
                   && in_array(session('pos_employee')->Role, ['cashier','manager']);
 @endphp

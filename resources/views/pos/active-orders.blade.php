@@ -29,6 +29,12 @@
         <button class="cat-tab" onclick="filterStatus('served', this)">Served</button>
     </div>
 
+    {{-- Search --}}
+    <div class="search-bar" style="margin-bottom:0">
+        <input type="text" id="orderSearch" class="search-input" placeholder="Search table or item…"
+               oninput="applyFilters()" autocomplete="off">
+    </div>
+
     {{-- Combined payment bar (cashier/manager only) --}}
     @if(in_array(session('pos_employee')->Role, ['cashier','manager']))
     <div id="combineBar" style="display:none;position:sticky;top:0;z-index:50;background:var(--dark2);border-bottom:1px solid var(--border);padding:10px 16px;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
@@ -276,10 +282,12 @@
     }
 
     function applyFilters() {
+        const q = (document.getElementById('orderSearch')?.value || '').toLowerCase();
         document.querySelectorAll('.order-card-wrap').forEach(wrap => {
             const tm = currentType   === 'all' || wrap.dataset.type   === currentType;
             const sm = currentStatus === 'all' || wrap.dataset.status === currentStatus;
-            wrap.style.display = (tm && sm) ? '' : 'none';
+            const qm = !q || (wrap.dataset.search || '').includes(q);
+            wrap.style.display = (tm && sm && qm) ? '' : 'none';
         });
     }
 
@@ -305,8 +313,11 @@
             const chips      = o.items.map(i => `<span class="order-item-chip">${i.qty}x ${i.name}</span>`).join('');
             const extra      = o.items_extra > 0 ? `<span class="order-item-chip">+${o.items_extra} more</span>` : '';
             const isSelected = !!selected[o.id];
+            const isServed   = o.status === 'served';
+            const searchStr  = (o.table + ' ' + o.items.map(i => i.name).join(' ')).toLowerCase();
 
-            const checkbox = isCashier ? `
+            // Checkbox only for cashier/manager AND only for served orders
+            const checkbox = (isCashier && isServed) ? `
                 <label class="order-cb-label" onclick="event.stopPropagation()" title="Select for combined payment">
                     <input type="checkbox" class="order-select-cb" data-id="${o.id}"
                         ${isSelected ? 'checked' : ''}
@@ -316,7 +327,7 @@
 
             return `
                 <div class="order-card-wrap ${isSelected ? 'order-card-selected' : ''}"
-                     data-status="${o.status}" data-type="${typeClass}">
+                     data-status="${o.status}" data-type="${typeClass}" data-search="${searchStr}">
                     <a href="/orders/${o.id}" class="order-card" style="position:relative">
                         ${checkbox}
                         <div class="order-card-header">
@@ -325,7 +336,7 @@
                                 <span class="order-type-chip order-type-chip--${typeClass}">${typeLabel}</span>
                                 <span class="status-badge status-${o.status}">${o.status.charAt(0).toUpperCase()+o.status.slice(1)}</span>
                             </div>
-                            <div class="order-time" style="${isCashier ? 'padding-right:28px' : ''}">${o.time} · ${o.updated_at}</div>
+                            <div class="order-time" style="${isCashier && isServed ? 'padding-right:28px' : ''}">${o.time} · ${o.updated_at}</div>
                         </div>
                         <div class="order-card-items">${o.items_count} item(s) · ₱${parseFloat(o.total).toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
                         <div class="order-card-footer">${chips}${extra}</div>

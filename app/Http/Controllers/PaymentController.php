@@ -26,6 +26,10 @@ class PaymentController extends Controller
             return back()->withErrors(['order_id' => 'This order has already been paid or cancelled.']);
         }
 
+        if ($order->Status !== 'served') {
+            return back()->withErrors(['order_id' => 'Payment can only be processed for served orders.']);
+        }
+
         $tendered = $validated['method'] === 'gcash'
             ? $order->Total_Amount
             : ($validated['amount_tendered'] ?? 0);
@@ -76,6 +80,11 @@ class PaymentController extends Controller
             if (in_array($order->Status, ['paid', 'cancelled'])) {
                 return response()->json([
                     'error' => 'Order for ' . $order->Table_number . ' has already been paid or cancelled.'
+                ], 422);
+            }
+            if ($order->Status !== 'served') {
+                return response()->json([
+                    'error' => 'Order for ' . $order->Table_number . ' must be served before payment.'
                 ], 422);
             }
         }
