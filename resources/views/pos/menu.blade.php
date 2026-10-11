@@ -25,11 +25,13 @@
         @endforeach
     </div>
 
-    @foreach($menus->groupBy('Category')->sortKeys(SORT_NATURAL | SORT_FLAG_CASE) as $cat => $items)
-    <div class="section-title menu-section" data-cat="{{ $cat }}">{{ ucfirst($cat) }}</div>
-    <div class="inventory-list menu-section" data-cat="{{ $cat }}" style="margin-bottom:8px">
-        @foreach($items as $m)
-        <div class="inv-row" data-name="{{ strtolower($m->Name) }}">
+    {{-- Flat list for paginated rendering --}}
+    <div id="menuList">
+        @foreach($menus->sortBy('Category')->sortBy('Name') as $m)
+        <div class="inv-row menu-card-item"
+             data-name="{{ strtolower($m->Name) }}"
+             data-cat="{{ $m->Category }}"
+             style="display:none">
             <div class="menu-thumb-wrap">
                 @if($m->Image)
                     <img src="{{ str_starts_with($m->Image, 'http') ? $m->Image : asset('storage/'.$m->Image) }}" class="menu-thumb" alt="{{ $m->Name }}">
@@ -69,7 +71,18 @@
         </div>
         @endforeach
     </div>
-    @endforeach
+
+    <div id="menuEmpty" class="empty-state" style="display:none">
+        <div>No menu items found.</div>
+    </div>
+
+    {{-- Pagination bar --}}
+    <div class="inv-pagination" id="menuPagination" style="display:none">
+        <button class="inv-page-btn" id="menuPrevBtn" onclick="menuChangePage(menuCurrentPage - 1)">‹</button>
+        <div id="menuPageNumbers" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center"></div>
+        <button class="inv-page-btn" id="menuNextBtn" onclick="menuChangePage(menuCurrentPage + 1)">›</button>
+    </div>
+    <div class="inv-page-info" id="menuPageInfo" style="display:none"></div>
 
     @if($menus->isEmpty())
     <div class="empty-state">
@@ -259,6 +272,10 @@
 
 @push('scripts')
 <script>
+    const MENU_PER_PAGE = 10;
+    let menuCurrentPage = 1;
+    let menuFilteredItems = [];
+
     function openModal(id)  { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
@@ -266,9 +283,7 @@
         const isDrinks = (cat || '').toLowerCase() === 'drinks';
         const group = document.getElementById(which === 'add' ? 'addInvLinkGroup' : 'editInvLinkGroup');
         group.style.display = isDrinks ? '' : 'none';
-        if (!isDrinks) {
-            selectInv(which, '', 'No link');
-        }
+        if (!isDrinks) selectInv(which, '', 'No link');
     }
 
     // ── Searchable inventory dropdown ────────────────────────────
@@ -277,12 +292,9 @@
         dd.style.display = 'block';
         filterInvDropdown(which);
     }
-
     function closeInvDropdown(which) {
-        const dd = document.getElementById(which === 'add' ? 'addInvDropdown' : 'editInvDropdown');
-        dd.style.display = 'none';
+        document.getElementById(which === 'add' ? 'addInvDropdown' : 'editInvDropdown').style.display = 'none';
     }
-
     function filterInvDropdown(which) {
         const input = document.getElementById(which === 'add' ? 'addInvSearch' : 'editInvSearch');
         const dd    = document.getElementById(which === 'add' ? 'addInvDropdown' : 'editInvDropdown');
@@ -293,59 +305,95 @@
             item.style.display = !q || label.toLowerCase().includes(q) ? '' : 'none';
         });
     }
-
     function selectInv(which, id, label) {
         document.getElementById(which === 'add' ? 'addInvId'     : 'editInvId').value     = id;
         document.getElementById(which === 'add' ? 'addInvSearch' : 'editInvSearch').value = id ? label : '';
         closeInvDropdown(which);
     }
 
-    function applyMenuFilters() {
-        const active = document.querySelector('.cat-tab.active');
-        const cat = active ? active.dataset.cat : 'all';
-        const q = document.getElementById('menuSearch').value.toLowerCase().trim();
-        document.querySelectorAll('.menu-section').forEach(section => {
-            const catMatch = cat === 'all' || section.dataset.cat === cat;
-            let visible = 0;
-            section.querySelectorAll('.inv-row').forEach(row => {
-                const match = catMatch && (!q || row.dataset.name.includes(q));
-                row.style.display = match ? '' : 'none';
-                if (match) visible++;
-            });
-            section.style.display = visible > 0 ? '' : 'none';
+    // ── Menu pagination ───────────────────────────────────────────
+    function getFilteredItems() {
+        const cat = (document.querySelector('.cat-tab.active') || {}).dataset?.cat || 'all';
+        const q   = document.getElementById('menuSearch').value.toLowerCase().trim();
+        return Array.from(document.querySelectorAll('.menu-card-item')).filter(row => {
+            const catMatch  = cat === 'all' || row.dataset.cat === cat;
+            const nameMatch = !q || row.dataset.name.includes(q);
+            return catMatch && nameMatch;
         });
     }
 
-    function syncMenuUrl() {
-        const params = new URLSearchParams();
-        const active = document.querySelector('.cat-tab.active');
-        const cat = active ? active.dataset.cat : 'all';
-        const q = document.getElementById('menuSearch').value.trim();
-        if (cat !== 'all') params.set('cat', cat);
-        if (q) params.set('search', q);
-        const qs = params.toString();
-        history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+    function renderMenuPage(page) {
+        menuFilteredItems = getFilteredItems();
+        const total   = menuFilteredItems.length;
+        const pages   = Math.max(1, Math.ceil(total / MENU_PER_PAGE));
+        menuCurrentPage = Math.min(Math.max(1, page), pages);
+
+        const start = (menuCurrentPage - 1) * MENU_PER_PAGE;
+        const end   = start + MENU_PER_PAGE;
+
+        // Hide all, show only current page slice
+        document.querySelectorAll('.menu-card-item').forEach(r => r.style.display = 'none');
+        menuFilteredItems.forEach((row, i) => {
+            row.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+
+        // Empty state
+        document.getElementById('menuEmpty').style.display = total === 0 ? '' : 'none';
+
+        // Pagination bar
+        const pag  = document.getElementById('menuPagination');
+        const info = document.getElementById('menuPageInfo');
+        if (pages <= 1 && total > 0) {
+            pag.style.display  = 'none';
+            info.style.display = 'none';
+        } else if (total > 0) {
+            pag.style.display  = 'flex';
+            info.style.display = '';
+
+            document.getElementById('menuPrevBtn').classList.toggle('inv-page-btn--disabled', menuCurrentPage === 1);
+            document.getElementById('menuNextBtn').classList.toggle('inv-page-btn--disabled', menuCurrentPage === pages);
+
+            // Page number buttons
+            const numWrap = document.getElementById('menuPageNumbers');
+            numWrap.innerHTML = '';
+            for (let p = 1; p <= pages; p++) {
+                const btn = document.createElement('button');
+                btn.className = 'inv-page-btn' + (p === menuCurrentPage ? ' inv-page-btn--active' : '');
+                btn.textContent = p;
+                btn.onclick = () => menuChangePage(p);
+                numWrap.appendChild(btn);
+            }
+
+            const showing = Math.min(end, total);
+            info.textContent = `Showing ${start + 1}–${showing} of ${total} items`;
+        } else {
+            pag.style.display  = 'none';
+            info.style.display = 'none';
+        }
+    }
+
+    function menuChangePage(page) {
+        renderMenuPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function filterMenuCat(cat) {
         document.querySelectorAll('.cat-tab').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
-        applyMenuFilters();
-        syncMenuUrl();
+        renderMenuPage(1);
     }
 
     function searchMenu() {
-        applyMenuFilters();
-        syncMenuUrl();
+        renderMenuPage(1);
     }
 
-    // Restore category/search after add-edit-delete redirects back here
+    // Init on load
     (function () {
         const params = new URLSearchParams(location.search);
         const cat = params.get('cat') || 'all';
-        const q = params.get('search') || '';
+        const q   = params.get('search') || '';
         document.getElementById('menuSearch').value = q;
         document.querySelectorAll('.cat-tab').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
-        applyMenuFilters();
+        renderMenuPage(1);
     })();
 
     function openEditMenu(id, name, price, cat, avail, invId, imgUrl) {
@@ -355,7 +403,6 @@
         document.getElementById('emCat').value         = cat;
         toggleInvLink('edit', cat);
 
-        // Set searchable inventory dropdown
         if (invId) {
             const item = document.querySelector(`#editInvDropdown [data-id="${invId}"]`);
             const label = item ? (item.dataset.label || item.textContent.trim()) : '';
@@ -364,18 +411,15 @@
             selectInv('edit', '', 'No link');
         }
 
-        document.getElementById('emAvailYes').checked  = avail == 1;
-        document.getElementById('emAvailNo').checked   = avail != 1;
+        document.getElementById('emAvailYes').checked = avail == 1;
+        document.getElementById('emAvailNo').checked  = avail != 1;
 
         const preview = document.getElementById('editImgPreview');
         const ph      = document.getElementById('editImgPlaceholder');
         if (imgUrl) {
-            preview.src           = imgUrl;
-            preview.style.display = 'block';
-            ph.style.display      = 'none';
+            preview.src = imgUrl; preview.style.display = 'block'; ph.style.display = 'none';
         } else {
-            preview.style.display = 'none';
-            ph.style.display      = 'flex';
+            preview.style.display = 'none'; ph.style.display = 'flex';
         }
         document.getElementById('editImgInput').value = '';
         openModal('editMenuModal');

@@ -1845,3 +1845,51 @@ input[type=radio]:checked + .method-btn {
   .table-grid       { grid-template-columns: repeat(5, 1fr); }
   .screen           { max-width: 700px; }
 }
+
+/* ---- Inventory Pagination ---- */
+.inv-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 16px 4px;
+  flex-wrap: wrap;
+}
+
+.inv-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--dark3);
+  color: var(--text);
+  font-size: .82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all .2s;
+}
+.inv-page-btn:hover { border-color: var(--green); color: var(--green); }
+
+.inv-page-btn--active {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--dark);
+  box-shadow: var(--glow-green);
+  pointer-events: none;
+}
+
+.inv-page-btn--disabled {
+  opacity: .35;
+  pointer-events: none;
+}
+
+.inv-page-info {
+  text-align: center;
+  font-size: .75rem;
+  color: var(--muted);
+  padding: 4px 16px 12px;
+}

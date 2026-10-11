@@ -12,11 +12,14 @@ class InventoryController extends Controller
     public function index()
     {
         $search = request('search');
+        $status = request('status', 'all');
 
         $inventories = Inventory::when($search, fn($q) => $q->where('Name', 'like', "%{$search}%"))
+            ->when($status && $status !== 'all', fn($q) => $q->where('Status', $status))
             ->orderBy('Status')
             ->orderBy('Name')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         $lowCount  = Inventory::where('Status', 'low_stock')->count();
         $outCount  = Inventory::where('Status', 'out_of_stock')->count();

@@ -25,22 +25,29 @@
     </div>
     @endif
 
-    <form method="GET" action="{{ route('inventory.index') }}" class="search-bar">
+    <form method="GET" action="{{ route('inventory.index') }}" class="search-bar" id="invFilterForm">
         <input type="text" id="invSearch" name="search" class="search-input" placeholder="Search stock…"
-               value="{{ $search ?? '' }}" oninput="applyInvFilters()" autocomplete="off">
+               value="{{ $search ?? '' }}" autocomplete="off">
+        <input type="hidden" name="status" id="invStatusInput" value="{{ request('status', 'all') }}">
+        <button type="submit" class="btn-primary btn-sm" style="width:auto;padding:8px 14px">Search</button>
     </form>
 
     {{-- Status filter chips --}}
+    @php $activeStatus = request('status', 'all'); @endphp
     <div class="cat-tabs">
-        <button class="cat-tab active" data-status="all"    onclick="filterInvStatus('all', this)">All</button>
-        <button class="cat-tab"        data-status="in_stock"    onclick="filterInvStatus('in_stock', this)">In Stock</button>
-        <button class="cat-tab"        data-status="low_stock"   onclick="filterInvStatus('low_stock', this)">Low Stock</button>
-        <button class="cat-tab"        data-status="out_of_stock" onclick="filterInvStatus('out_of_stock', this)">Out of Stock</button>
+        <button type="button" class="cat-tab {{ $activeStatus === 'all' ? 'active' : '' }}"
+            onclick="submitStatus('all')">All</button>
+        <button type="button" class="cat-tab {{ $activeStatus === 'in_stock' ? 'active' : '' }}"
+            onclick="submitStatus('in_stock')">In Stock</button>
+        <button type="button" class="cat-tab {{ $activeStatus === 'low_stock' ? 'active' : '' }}"
+            onclick="submitStatus('low_stock')">Low Stock</button>
+        <button type="button" class="cat-tab {{ $activeStatus === 'out_of_stock' ? 'active' : '' }}"
+            onclick="submitStatus('out_of_stock')">Out of Stock</button>
     </div>
 
     <div class="inventory-list" style="margin-top:8px">
         @forelse($inventories as $inv)
-        <div class="inv-row" data-name="{{ strtolower($inv->Name) }}" data-status="{{ $inv->Status }}">
+        <div class="inv-row">
             <div class="inv-info">
                 <div class="inv-name">{{ $inv->Name }}</div>
                 <div class="inv-unit">{{ $inv->Unit }}</div>
@@ -72,6 +79,37 @@
         </div>
         @endforelse
     </div>
+
+    {{-- Pagination --}}
+    @if($inventories->hasPages())
+    <div class="inv-pagination">
+        {{-- Prev --}}
+        @if($inventories->onFirstPage())
+            <span class="inv-page-btn inv-page-btn--disabled">‹</span>
+        @else
+            <a href="{{ $inventories->previousPageUrl() }}" class="inv-page-btn">‹</a>
+        @endif
+
+        {{-- Page numbers --}}
+        @foreach($inventories->getUrlRange(1, $inventories->lastPage()) as $page => $url)
+            @if($page == $inventories->currentPage())
+                <span class="inv-page-btn inv-page-btn--active">{{ $page }}</span>
+            @else
+                <a href="{{ $url }}" class="inv-page-btn">{{ $page }}</a>
+            @endif
+        @endforeach
+
+        {{-- Next --}}
+        @if($inventories->hasMorePages())
+            <a href="{{ $inventories->nextPageUrl() }}" class="inv-page-btn">›</a>
+        @else
+            <span class="inv-page-btn inv-page-btn--disabled">›</span>
+        @endif
+    </div>
+    <div class="inv-page-info">
+        Showing {{ $inventories->firstItem() }}–{{ $inventories->lastItem() }} of {{ $inventories->total() }} items
+    </div>
+    @endif
 
 </div>
 
@@ -176,22 +214,9 @@
         openModal('editModal');
     }
 
-    let activeInvStatus = 'all';
-
-    function filterInvStatus(status, el) {
-        document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-        activeInvStatus = status;
-        applyInvFilters();
-    }
-
-    function applyInvFilters() {
-        const q = document.getElementById('invSearch').value.toLowerCase();
-        document.querySelectorAll('.inventory-list .inv-row').forEach(row => {
-            const nameMatch   = row.dataset.name.includes(q);
-            const statusMatch = activeInvStatus === 'all' || row.dataset.status === activeInvStatus;
-            row.style.display = (nameMatch && statusMatch) ? '' : 'none';
-        });
+    function submitStatus(status) {
+        document.getElementById('invStatusInput').value = status;
+        document.getElementById('invFilterForm').submit();
     }
 </script>
 @endpush
