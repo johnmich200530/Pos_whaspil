@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Menu;
 use App\Models\Inventory;
+use App\Models\MenuIngredient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -13,6 +14,75 @@ use Carbon\Carbon;
 class OrderController extends Controller
 {
     use \App\Http\Controllers\Concerns\LogsAudit;
+
+    /**
+     * Deduct inventory for a menu item ordered in a given quantity.
+     * Uses menu_ingredients if defined, falls back to legacy Inventory_ID link.
+     */
+    private function deductInventory(Menu $menu, int $quantity): void
+    {
+        $ingredients = $menu->ingredients()->with('inventory')->get();
+
+        if ($ingredients->isNotEmpty()) {
+            foreach ($ingredients as $ing) {
+                $inv    = $ing->inventory;
+                $deduct = $ing->quantity_used * $quantity;
+                $newQty = max(0, $inv->Quantity - $deduct);
+                $inv->update([
+                    'Quantity' => $newQty,
+                    'Status'   => $newQty <= 0 ? 'out_of_stock' : ($newQty < 10 ? 'low_stock' : 'in_stock'),
+                ]);
+                if ($newQty <= 0) {
+                    // Disable all menu items that use this ingredient
+                    Menu::whereHas('ingredients', fn($q) => $q->where('Inventory_ID', $inv->Inventory_ID))
+                        ->update(['Availability' => false]);
+                    // Also legacy link
+                    Menu::where('Inventory_ID', $inv->Inventory_ID)->update(['Availability' => false]);
+                }
+            }
+        } elseif ($menu->inventory) {
+            // Legacy one-to-one link (Drinks)
+            $inv    = $menu->inventory;
+            $newQty = max(0, $inv->Quantity - $quantity);
+            $inv->update([
+                'Quantity' => $newQty,
+                'Status'   => $newQty <= 0 ? 'out_of_stock' : ($newQty < 10 ? 'low_stock' : 'in_stock'),
+            ]);
+            if ($newQty <= 0) {
+                Menu::where('Inventory_ID', $inv->Inventory_ID)->update(['Availability' => false]);
+            }
+        }
+    }
+
+    /**
+     * Restore inventory for a menu item (on cancellation or item removal).
+     */
+    private function restoreInventory(Menu $menu, int $quantity): void
+    {
+        $ingredients = $menu->ingredients()->with('inventory')->get();
+
+        if ($ingredients->isNotEmpty()) {
+            foreach ($ingredients as $ing) {
+                $inv         = $ing->inventory;
+                $restoredQty = $inv->Quantity + ($ing->quantity_used * $quantity);
+                $inv->update([
+                    'Quantity' => $restoredQty,
+                    'Status'   => $restoredQty <= 0 ? 'out_of_stock' : ($restoredQty < 10 ? 'low_stock' : 'in_stock'),
+                ]);
+                Menu::whereHas('ingredients', fn($q) => $q->where('Inventory_ID', $inv->Inventory_ID))
+                    ->update(['Availability' => $restoredQty > 0]);
+                Menu::where('Inventory_ID', $inv->Inventory_ID)->update(['Availability' => $restoredQty > 0]);
+            }
+        } elseif ($menu->inventory) {
+            $inv         = $menu->inventory;
+            $restoredQty = $inv->Quantity + $quantity;
+            $inv->update([
+                'Quantity' => $restoredQty,
+                'Status'   => $restoredQty <= 0 ? 'out_of_stock' : ($restoredQty < 10 ? 'low_stock' : 'in_stock'),
+            ]);
+            Menu::where('Inventory_ID', $inv->Inventory_ID)->update(['Availability' => $restoredQty > 0]);
+        }
+    }
 
     public function tables()
     {
@@ -82,20 +152,7 @@ class OrderController extends Controller
                 ]);
 
                 // Auto-deduct inventory
-                $inventory = $menu->inventory;
-                if ($inventory) {
-                    $newQty = max(0, $inventory->Quantity - $item['quantity']);
-                    $inventory->update([
-                        'Quantity' => $newQty,
-                        'Status'   => $newQty <= 0 ? 'out_of_stock'
-                            : ($newQty < 10 ? 'low_stock' : 'in_stock'),
-                    ]);
-
-                    if ($newQty <= 0) {
-                        Menu::where('Inventory_ID', $inventory->Inventory_ID)
-                            ->update(['Availability' => false]);
-                    }
-                }
+                $this->deductInventory($menu, $item['quantity']);
             }
 
             $order->update(['Total_Amount' => $total]);
@@ -175,21 +232,10 @@ class OrderController extends Controller
 
         if ($validated['status'] === 'cancelled') {
             // Restore inventory for all items in the cancelled order
-            $order->load('orderItems.menu.inventory');
+            $order->load('orderItems.menu.ingredients.inventory', 'orderItems.menu.inventory');
             foreach ($order->orderItems as $item) {
-                $inventory = $item->menu->inventory ?? null;
-                if ($inventory) {
-                    $restoredQty = $inventory->Quantity + $item->Quantity;
-                    $inventory->update([
-                        'Quantity' => $restoredQty,
-                        'Status'   => $restoredQty <= 0 ? 'out_of_stock'
-                            : ($restoredQty < 10 ? 'low_stock' : 'in_stock'),
-                    ]);
-                    Menu::where('Inventory_ID', $inventory->Inventory_ID)
-                        ->update(['Availability' => $restoredQty > 0]);
-                }
+                $this->restoreInventory($item->menu, $item->Quantity);
             }
-
             $this->audit('order.cancelled', 'Order cancelled for ' . $order->Table_number, $order->Table_number);
             return redirect()->route('orders.active')->with('success', 'Order cancelled.');
         }
@@ -215,15 +261,13 @@ class OrderController extends Controller
 
         $order->update(['Total_Amount' => $order->orderItems()->sum('Subtotal')]);
 
-        if ($diff !== 0 && $menu->inventory) {
-            $inv    = $menu->inventory;
-            $invQty = $diff > 0 ? max(0, $inv->Quantity - $diff) : $inv->Quantity + abs($diff);
-            $inv->update([
-                'Quantity' => $invQty,
-                'Status'   => $invQty <= 0 ? 'out_of_stock' : ($invQty < 10 ? 'low_stock' : 'in_stock'),
-            ]);
-            Menu::where('Inventory_ID', $inv->Inventory_ID)
-                ->update(['Availability' => $invQty > 0]);
+        if ($diff !== 0) {
+            $menu->load('ingredients.inventory', 'inventory');
+            if ($diff > 0) {
+                $this->deductInventory($menu, abs($diff));
+            } else {
+                $this->restoreInventory($menu, abs($diff));
+            }
         }
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -241,16 +285,8 @@ class OrderController extends Controller
         $orderItem->delete();
 
         // Restore inventory
-        if ($menu->inventory) {
-            $inv    = $menu->inventory;
-            $invQty = $inv->Quantity + $qty;
-            $inv->update([
-                'Quantity' => $invQty,
-                'Status'   => $invQty <= 0 ? 'out_of_stock' : ($invQty < 10 ? 'low_stock' : 'in_stock'),
-            ]);
-            Menu::where('Inventory_ID', $inv->Inventory_ID)
-                ->update(['Availability' => $invQty > 0]);
-        }
+        $menu->load('ingredients.inventory', 'inventory');
+        $this->restoreInventory($menu, $qty);
 
         // Delete order if no items left
         if ($order->orderItems()->count() === 0) {

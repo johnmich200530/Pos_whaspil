@@ -58,7 +58,8 @@
                         '{{ addslashes($m->Category) }}',
                         {{ $m->Availability ? 1 : 0 }},
                         {{ $m->Inventory_ID ?? 'null' }},
-                        '{{ $m->Image ? (str_starts_with($m->Image, 'http') ? $m->Image : asset('storage/'.$m->Image)) : '' }}'
+                        '{{ $m->Image ? (str_starts_with($m->Image, 'http') ? $m->Image : asset('storage/'.$m->Image)) : '' }}',
+                        @json($m->ingredients->map(fn($i) => ['inventory_id' => $i->Inventory_ID, 'quantity_used' => $i->quantity_used, 'name' => $i->inventory->Name ?? '']))
                     )"><i data-lucide="pencil"></i></button>
                 <form method="POST" action="{{ route('menu.destroy', $m) }}"
                       onsubmit="return confirm('Remove {{ addslashes($m->Name) }}?')">
@@ -136,6 +137,17 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Ingredients (non-drinks) --}}
+            <div class="form-group" id="addIngredientGroup" style="display:none">
+                <label class="form-label">Ingredients
+                    <span style="color:#888;font-size:.78rem">(deducted from stock per serving)</span>
+                </label>
+                <div id="addIngredientRows"></div>
+                <button type="button" class="btn-secondary btn-sm" style="margin-top:6px"
+                        onclick="addIngredientRow('add')">+ Add Ingredient</button>
+            </div>
+
             {{-- Image upload --}}
             <div class="form-group">
                 <label class="form-label">Item Image</label>
@@ -225,6 +237,17 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Ingredients (non-drinks) --}}
+            <div class="form-group" id="editIngredientGroup" style="display:none">
+                <label class="form-label">Ingredients
+                    <span style="color:#888;font-size:.78rem">(deducted from stock per serving)</span>
+                </label>
+                <div id="editIngredientRows"></div>
+                <button type="button" class="btn-secondary btn-sm" style="margin-top:6px"
+                        onclick="addIngredientRow('edit')">+ Add Ingredient</button>
+            </div>
+
             {{-- Image upload --}}
             <div class="form-group">
                 <label class="form-label">Item Image <span style="color:#888;font-size:.78rem">(leave blank to keep current)</span></label>
@@ -265,7 +288,9 @@
     function toggleInvLink(which, cat) {
         const isDrinks = (cat || '').toLowerCase() === 'drinks';
         const group = document.getElementById(which === 'add' ? 'addInvLinkGroup' : 'editInvLinkGroup');
-        group.style.display = isDrinks ? '' : 'none';
+        const ingGroup = document.getElementById(which === 'add' ? 'addIngredientGroup' : 'editIngredientGroup');
+        group.style.display    = isDrinks ? '' : 'none';
+        ingGroup.style.display = isDrinks ? 'none' : '';
         if (!isDrinks) {
             selectInv(which, '', 'No link');
         }
@@ -348,7 +373,7 @@
         applyMenuFilters();
     })();
 
-    function openEditMenu(id, name, price, cat, avail, invId, imgUrl) {
+    function openEditMenu(id, name, price, cat, avail, invId, imgUrl, existingIngredients) {
         document.getElementById('editMenuForm').action = '/menu/' + id;
         document.getElementById('emName').value        = name;
         document.getElementById('emPrice').value       = price;
@@ -362,6 +387,16 @@
             selectInv('edit', invId, label);
         } else {
             selectInv('edit', '', 'No link');
+        }
+
+        // Load existing ingredients
+        const rowsEl = document.getElementById('editIngredientRows');
+        rowsEl.innerHTML = '';
+        editIngCount = 0;
+        if (existingIngredients && existingIngredients.length > 0) {
+            existingIngredients.forEach(ing => {
+                addIngredientRow('edit', ing.inventory_id, ing.quantity_used, ing.name);
+            });
         }
 
         document.getElementById('emAvailYes').checked  = avail == 1;
@@ -391,6 +426,79 @@
             document.getElementById(placeholderId).style.display = 'none';
         };
         reader.readAsDataURL(file);
+    }
+
+    // ── Ingredient rows ───────────────────────────────────────────
+    // All inventory items available for ingredient search
+    const allInventories = @json($inventories->map(fn($i) => [
+        'id'    => $i->Inventory_ID,
+        'name'  => $i->Name,
+        'qty'   => $i->Quantity,
+        'unit'  => $i->Unit,
+        'label' => $i->Name . ' — ' . $i->Quantity . ' ' . $i->Unit,
+    ]));
+
+    let addIngCount  = 0;
+    let editIngCount = 0;
+
+    function addIngredientRow(which, invId = '', qty = '', invName = '') {
+        const container = document.getElementById(which === 'add' ? 'addIngredientRows' : 'editIngredientRows');
+        const idx       = which === 'add' ? addIngCount++ : editIngCount++;
+        const prefix    = `ingredients[${idx}]`;
+        const rowId     = `${which}Ing${idx}`;
+
+        const row = document.createElement('div');
+        row.className = 'ingredient-row';
+        row.id        = rowId;
+        row.innerHTML = `
+            <div class="ingredient-search-wrap">
+                <input type="hidden" name="${prefix}[inventory_id]" id="${rowId}Id" value="${invId}">
+                <input type="text" class="form-input ingredient-search-input" id="${rowId}Search"
+                       placeholder="Search ingredient…" autocomplete="off"
+                       value="${invName}"
+                       oninput="filterIngRow('${rowId}')"
+                       onfocus="openIngRow('${rowId}')"
+                       onblur="setTimeout(()=>closeIngRow('${rowId}'),150)">
+                <div class="inv-dropdown" id="${rowId}Dropdown" style="display:none">
+                    ${allInventories.map(i => `
+                        <div class="inv-dropdown-item"
+                             data-id="${i.id}" data-label="${i.label}"
+                             onmousedown="selectIngRow('${rowId}','${i.id}','${i.label.replace(/'/g,"\\'")}')">
+                            ${i.label}
+                        </div>`).join('')}
+                </div>
+            </div>
+            <input type="number" name="${prefix}[quantity_used]" class="form-input ingredient-qty-input"
+                   placeholder="Qty" min="0.001" step="0.001" value="${qty}" required>
+            <button type="button" class="btn-icon" onclick="document.getElementById('${rowId}').remove()">
+                <i data-lucide="trash-2"></i>
+            </button>`;
+
+        container.appendChild(row);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function openIngRow(rowId) {
+        document.getElementById(rowId + 'Dropdown').style.display = 'block';
+        filterIngRow(rowId);
+    }
+    function closeIngRow(rowId) {
+        const dd = document.getElementById(rowId + 'Dropdown');
+        if (dd) dd.style.display = 'none';
+    }
+    function filterIngRow(rowId) {
+        const q  = (document.getElementById(rowId + 'Search')?.value || '').toLowerCase();
+        const dd = document.getElementById(rowId + 'Dropdown');
+        if (!dd) return;
+        dd.style.display = 'block';
+        dd.querySelectorAll('.inv-dropdown-item').forEach(item => {
+            item.style.display = !q || item.dataset.label.toLowerCase().includes(q) ? '' : 'none';
+        });
+    }
+    function selectIngRow(rowId, id, label) {
+        document.getElementById(rowId + 'Id').value     = id;
+        document.getElementById(rowId + 'Search').value = label;
+        closeIngRow(rowId);
     }
 </script>
 @endpush

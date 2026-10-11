@@ -17,6 +17,11 @@ class Menu extends Model
         return $this->belongsTo(Inventory::class, 'Inventory_ID', 'Inventory_ID');
     }
 
+    public function ingredients()
+    {
+        return $this->hasMany(MenuIngredient::class, 'Menu_ID', 'Menu_ID');
+    }
+
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class, 'Menu_ID', 'Menu_ID');
