@@ -100,7 +100,34 @@
         </table>
 
         @if($logs->hasPages())
-        <div style="margin-top:16px">{{ $logs->links() }}</div>
+        <div style="margin-top:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.85rem">
+            {{-- Previous --}}
+            @if($logs->onFirstPage())
+                <span style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--muted);cursor:default">‹ Prev</span>
+            @else
+                <a href="{{ $logs->previousPageUrl() }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none">‹ Prev</a>
+            @endif
+
+            {{-- Page numbers --}}
+            @foreach($logs->getUrlRange(1, $logs->lastPage()) as $page => $url)
+                @if($page == $logs->currentPage())
+                    <span style="padding:5px 10px;border-radius:6px;background:var(--green);color:#fff;font-weight:600">{{ $page }}</span>
+                @else
+                    <a href="{{ $url }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none">{{ $page }}</a>
+                @endif
+            @endforeach
+
+            {{-- Next --}}
+            @if($logs->hasMorePages())
+                <a href="{{ $logs->nextPageUrl() }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none">Next ›</a>
+            @else
+                <span style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--muted);cursor:default">Next ›</span>
+            @endif
+
+            <span style="color:var(--muted);margin-left:6px">
+                Showing {{ $logs->firstItem() }}–{{ $logs->lastItem() }} of {{ $logs->total() }} results
+            </span>
+        </div>
         @endif
     </div>
 
