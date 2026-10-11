@@ -101,57 +101,58 @@
 
         @if($logs->hasPages())
         @php
-            $current  = $logs->currentPage();
-            $last     = $logs->lastPage();
-            $window   = 2; // pages around current
-            $pages    = [];
+            $current = $logs->currentPage();
+            $last    = $logs->lastPage();
 
-            // Always show first 2 pages
-            for ($i = 1; $i <= min(2, $last); $i++) $pages[] = $i;
+            // Always render exactly: Prev | 1 | 2 | 3 | ... | last | Next
+            // Window: show up to 3 pages around current, always show first and last
+            // Build a fixed set of slots to prevent layout shift
 
-            // Window around current
-            for ($i = max(3, $current - $window); $i <= min($last - 1, $current + $window); $i++) $pages[] = $i;
+            $slots = [];
 
-            // Always show last page
-            if ($last > 2) $pages[] = $last;
+            if ($last <= 7) {
+                // Not enough pages to need ellipsis — show all
+                for ($i = 1; $i <= $last; $i++) $slots[] = $i;
+            } else {
+                // Always: 1, 2, 3, [window around current], last-2, last-1, last
+                // Simplified: first 1, window of 3 centered on current, last 1
+                $slots[] = 1;
 
-            $pages = array_unique($pages);
-            sort($pages);
+                $winStart = max(2, $current - 1);
+                $winEnd   = min($last - 1, $current + 1);
+
+                if ($winStart > 2)       $slots[] = '...';
+                for ($i = $winStart; $i <= $winEnd; $i++) $slots[] = $i;
+                if ($winEnd < $last - 1) $slots[] = '...';
+
+                $slots[] = $last;
+            }
         @endphp
 
-        <div style="margin-top:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.85rem">
+        <div style="margin-top:16px;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;font-size:.85rem">
             {{-- Previous --}}
             @if($logs->onFirstPage())
-                <span style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--muted);cursor:default">‹ Prev</span>
+                <span style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--muted);cursor:default;white-space:nowrap">‹ Prev</span>
             @else
-                <a href="{{ $logs->previousPageUrl() }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none">‹ Prev</a>
+                <a href="{{ $logs->previousPageUrl() }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none;white-space:nowrap">‹ Prev</a>
             @endif
 
-            {{-- Page numbers with ellipsis --}}
-            @php $prev = null; @endphp
-            @foreach($pages as $page)
-                @if($prev !== null && $page - $prev > 1)
-                    <span style="padding:5px 6px;color:var(--muted)">…</span>
-                @endif
-
-                @if($page == $current)
-                    <span style="padding:5px 10px;border-radius:6px;background:var(--green);color:#fff;font-weight:600">{{ $page }}</span>
+            @foreach($slots as $slot)
+                @if($slot === '...')
+                    <span style="padding:5px 6px;color:var(--muted);min-width:24px;text-align:center">…</span>
+                @elseif($slot == $current)
+                    <span style="padding:5px 10px;border-radius:6px;background:var(--green);color:#fff;font-weight:600;min-width:32px;text-align:center">{{ $slot }}</span>
                 @else
-                    <a href="{{ $logs->url($page) }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none">{{ $page }}</a>
+                    <a href="{{ $logs->url($slot) }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none;min-width:32px;text-align:center">{{ $slot }}</a>
                 @endif
-                @php $prev = $page; @endphp
             @endforeach
 
             {{-- Next --}}
             @if($logs->hasMorePages())
-                <a href="{{ $logs->nextPageUrl() }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none">Next ›</a>
+                <a href="{{ $logs->nextPageUrl() }}" style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--text);text-decoration:none;white-space:nowrap">Next ›</a>
             @else
-                <span style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--muted);cursor:default">Next ›</span>
+                <span style="padding:5px 10px;border-radius:6px;background:var(--dark3);color:var(--muted);cursor:default;white-space:nowrap">Next ›</span>
             @endif
-
-            <span style="color:var(--muted);margin-left:6px">
-                Showing {{ $logs->firstItem() }}–{{ $logs->lastItem() }} of {{ $logs->total() }} results
-            </span>
         </div>
         @endif
     </div>
