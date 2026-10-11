@@ -10,7 +10,7 @@ class Inventory extends Model
 
     public function getRouteKeyName(): string { return 'Inventory_ID'; }
 
-    protected $fillable = ['Name', 'Quantity', 'Unit', 'Status'];
+    protected $fillable = ['Name', 'Category', 'Quantity', 'Unit', 'Status'];
 
     public function menus()
     {

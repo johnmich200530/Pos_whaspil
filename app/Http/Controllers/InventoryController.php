@@ -11,11 +11,13 @@ class InventoryController extends Controller
 
     public function index()
     {
-        $search = request('search');
-        $status = request('status', 'all');
+        $search   = request('search');
+        $status   = request('status', 'all');
+        $category = request('category', 'all');
 
         $inventories = Inventory::when($search, fn($q) => $q->where('Name', 'like', "%{$search}%"))
             ->when($status && $status !== 'all', fn($q) => $q->where('Status', $status))
+            ->when($category && $category !== 'all', fn($q) => $q->where('Category', $category))
             ->orderBy('Status')
             ->orderBy('Name')
             ->paginate(8)
@@ -23,14 +25,17 @@ class InventoryController extends Controller
 
         $lowCount  = Inventory::where('Status', 'low_stock')->count();
         $outCount  = Inventory::where('Status', 'out_of_stock')->count();
+        $categories = Inventory::whereNotNull('Category')->where('Category', '!=', '')
+            ->distinct()->orderBy('Category')->pluck('Category');
 
-        return view('pos.inventory', compact('inventories', 'lowCount', 'outCount', 'search'));
+        return view('pos.inventory', compact('inventories', 'lowCount', 'outCount', 'search', 'categories'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name'     => 'required|string|max:255',
+            'category' => 'nullable|string|max:50',
             'quantity' => 'required|integer|min:0',
             'unit'     => 'required|string|max:50',
         ]);
@@ -40,6 +45,7 @@ class InventoryController extends Controller
 
         Inventory::create([
             'Name'     => $validated['name'],
+            'Category' => $validated['category'] ?: null,
             'Quantity' => $validated['quantity'],
             'Unit'     => $validated['unit'],
             'Status'   => $status,
@@ -54,12 +60,14 @@ class InventoryController extends Controller
     {
         $validated = $request->validate([
             'name'     => 'sometimes|string|max:255',
+            'category' => 'sometimes|nullable|string|max:50',
             'quantity' => 'sometimes|integer|min:0',
             'unit'     => 'sometimes|string|max:50',
         ]);
 
         $data = [];
         if (isset($validated['name']))     $data['Name']     = $validated['name'];
+        if (array_key_exists('category', $validated)) $data['Category'] = $validated['category'] ?: null;
         if (isset($validated['unit']))     $data['Unit']     = $validated['unit'];
         if (isset($validated['quantity'])) {
             $qty = $validated['quantity'];

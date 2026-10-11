@@ -28,6 +28,12 @@
     <form method="GET" action="{{ route('inventory.index') }}" class="search-bar" id="invFilterForm">
         <input type="text" id="invSearch" name="search" class="search-input" placeholder="Search stock…"
                value="{{ $search ?? '' }}" autocomplete="off">
+        <select name="category" class="form-input inv-cat-filter" onchange="document.getElementById('invFilterForm').submit()">
+            <option value="all">All Categories</option>
+            @foreach($categories as $cat)
+            <option value="{{ $cat }}" {{ request('category', 'all') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+            @endforeach
+        </select>
         <input type="hidden" name="status" id="invStatusInput" value="{{ request('status', 'all') }}">
         <button type="submit" class="btn-primary btn-sm" style="width:auto;padding:8px 14px">Search</button>
     </form>
@@ -50,7 +56,7 @@
         <div class="inv-row">
             <div class="inv-info">
                 <div class="inv-name">{{ $inv->Name }}</div>
-                <div class="inv-unit">{{ $inv->Unit }}</div>
+                <div class="inv-unit">{{ $inv->Unit }}@if($inv->Category) · {{ $inv->Category }}@endif</div>
             </div>
             <div class="inv-right">
                 <span class="inv-qty">{{ $inv->Quantity }} {{ $inv->Unit }}</span>
@@ -64,7 +70,8 @@
                         {{ $inv->Inventory_ID }},
                         '{{ addslashes($inv->Name) }}',
                         {{ $inv->Quantity }},
-                        '{{ addslashes($inv->Unit) }}'
+                        '{{ addslashes($inv->Unit) }}',
+                        '{{ addslashes($inv->Category ?? '') }}'
                     )"><i data-lucide="pencil"></i></button>
                 <form method="POST" action="{{ route('inventory.destroy', $inv) }}"
                       onsubmit="return confirm('Remove {{ addslashes($inv->Name) }}?')">
@@ -123,6 +130,11 @@
                 <label class="form-label">Item Name</label>
                 <input type="text" name="name" class="form-input" placeholder="e.g. Jasmine Rice" required>
             </div>
+            <div class="form-group">
+                <label class="form-label">Category <span style="opacity:.6">(optional)</span></label>
+                <input type="text" name="category" class="form-input" list="invCatList"
+                       placeholder="e.g. Meat, Vegetables, Sauces" maxlength="50">
+            </div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Quantity</label>
@@ -167,6 +179,10 @@
                 <label class="form-label">Item Name</label>
                 <input type="text" name="name" id="editName" class="form-input" required>
             </div>
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <input type="text" name="category" id="editCategory" class="form-input" list="invCatList" maxlength="50">
+            </div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Quantity</label>
@@ -202,15 +218,26 @@
 </div>
 
 @push('scripts')
+@php
+    $catSuggestions = collect($categories ?? [])
+        ->merge(['Staples / Dry Goods', 'Meat & Seafood', 'Vegetables & Fresh', 'Sauces & Condiments', 'Dairy & Frozen', 'Drinks & Beverages', 'Others'])
+        ->filter()->unique()->sort()->values();
+@endphp
+<datalist id="invCatList">
+    @foreach($catSuggestions as $cat)
+    <option value="{{ $cat }}">
+    @endforeach
+</datalist>
 <script>
     function openModal(id)  { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    function openEditModal(id, name, qty, unit) {
+    function openEditModal(id, name, qty, unit, category) {
         document.getElementById('editForm').action = '/inventory/' + id;
         document.getElementById('editName').value  = name;
         document.getElementById('editQty').value   = qty;
         document.getElementById('editUnit').value  = unit;
+        document.getElementById('editCategory').value = category || '';
         openModal('editModal');
     }
 
