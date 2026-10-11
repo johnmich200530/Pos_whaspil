@@ -45,11 +45,15 @@
                     @endif
                 </div>
                 <div class="detail-item-price" id="sub-{{ $oi->OrderItem_ID }}">
-                    ₱{{ number_format($oi->Subtotal, 2) }}
+                    @if(session('pos_employee')->Role === 'chef')
+                        Qty: {{ $oi->Quantity }}
+                    @else
+                        ₱{{ number_format($oi->Subtotal, 2) }}
+                    @endif
                 </div>
             </div>
             @endforeach
-            <div class="detail-total-row">
+            <div class="detail-total-row" @if(session('pos_employee')->Role === 'chef') style="display:none" @endif>
                 <span>Total</span>
                 <strong id="orderTotal">₱{{ number_format($order->Total_Amount, 2) }}</strong>
             </div>
@@ -70,6 +74,7 @@
                 </form>
                 @endforeach
                 {{-- Cancel — separate with confirmation + redirect to active orders --}}
+                @if(session('pos_employee')->Role !== 'chef')
                 <form method="POST" action="{{ route('orders.status', $order) }}"
                       onsubmit="return confirm('Cancel this order? This cannot be undone.')">
                     @csrf @method('PATCH')
@@ -79,6 +84,7 @@
                         Cancel Order
                     </button>
                 </form>
+                @endif
             </div>
         </div>
         @endif
