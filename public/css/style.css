@@ -1244,24 +1244,6 @@ input[type=radio]:checked + .method-btn {
 }
 .inv-dropdown-item:hover { background: var(--dark3); }
 
-/* ---- Ingredient rows ---- */
-.ingredient-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.ingredient-search-wrap {
-  position: relative;
-  flex: 1;
-}
-
-.ingredient-qty-input {
-  width: 90px;
-  flex-shrink: 0;
-}
-
 .gcash-no-qr {
   background: rgba(245,197,24,.1);
   border: 1px solid rgba(245,197,24,.3);
