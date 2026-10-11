@@ -28,15 +28,23 @@
     <form method="GET" action="{{ route('inventory.index') }}" class="search-bar" id="invFilterForm">
         <input type="text" id="invSearch" name="search" class="search-input" placeholder="Search stock…"
                value="{{ $search ?? '' }}" autocomplete="off">
-        <select name="category" class="form-input inv-cat-filter" onchange="document.getElementById('invFilterForm').submit()">
-            <option value="all">All Categories</option>
-            @foreach($categories as $cat)
-            <option value="{{ $cat }}" {{ request('category', 'all') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
-            @endforeach
-        </select>
         <input type="hidden" name="status" id="invStatusInput" value="{{ request('status', 'all') }}">
+        <input type="hidden" name="category" id="invCategoryInput" value="{{ request('category', 'all') }}">
         <button type="submit" class="btn-primary btn-sm" style="width:auto;padding:8px 14px">Search</button>
     </form>
+
+    {{-- Category filter tabs (same style as menu page) --}}
+    @php $activeCat = request('category', 'all'); @endphp
+    @if($categories->isNotEmpty())
+    <div class="cat-tabs">
+        <button type="button" class="cat-tab {{ $activeCat === 'all' ? 'active' : '' }}"
+            onclick="submitCategory('all')">All</button>
+        @foreach($categories as $cat)
+        <button type="button" class="cat-tab {{ $activeCat === $cat ? 'active' : '' }}"
+            onclick="submitCategory('{{ addslashes($cat) }}')">{{ ucfirst($cat) }}</button>
+        @endforeach
+    </div>
+    @endif
 
     {{-- Status filter chips --}}
     @php $activeStatus = request('status', 'all'); @endphp
@@ -220,7 +228,7 @@
 @push('scripts')
 @php
     $catSuggestions = collect($categories ?? [])
-        ->merge(['Staples / Dry Goods', 'Meat & Seafood', 'Vegetables & Fresh', 'Sauces & Condiments', 'Dairy & Frozen', 'Drinks & Beverages', 'Others'])
+        ->merge(['Staples / Dry Goods', 'Meat & Seafood', 'Vegetables & Fresh', 'Sauces & Condiments', 'Dairy & Frozen', 'Drinks & Beverages'])
         ->filter()->unique()->sort()->values();
 @endphp
 <datalist id="invCatList">
@@ -243,6 +251,11 @@
 
     function submitStatus(status) {
         document.getElementById('invStatusInput').value = status;
+        document.getElementById('invFilterForm').submit();
+    }
+
+    function submitCategory(cat) {
+        document.getElementById('invCategoryInput').value = cat;
         document.getElementById('invFilterForm').submit();
     }
 </script>
