@@ -284,41 +284,33 @@
         const html = orders.map(o => {
             const typeLabel  = o.is_takeout ? 'Takeout' : 'Dine-in';
             const typeClass  = o.is_takeout ? 'takeout' : 'dinein';
-            const chips      = o.items.map(i => `<span class="order-item-chip">${i.qty}× ${i.name}</span>`).join('');
-            const extra      = o.items_extra > 0 ? `<span class="order-item-chip order-item-chip--more">+${o.items_extra} more</span>` : '';
+            const chips      = o.items.map(i => `<span class="order-item-chip">${i.qty}x ${i.name}</span>`).join('');
+            const extra      = o.items_extra > 0 ? `<span class="order-item-chip">+${o.items_extra} more</span>` : '';
             const isSelected = !!selected[o.id];
 
             const checkbox = isCashier ? `
-                <label class="order-select-label" onclick="event.stopPropagation()">
+                <label class="order-cb-label" onclick="event.stopPropagation()" title="Select for combined payment">
                     <input type="checkbox" class="order-select-cb" data-id="${o.id}"
                         ${isSelected ? 'checked' : ''}
                         onchange="toggleSelect(event, ${o.id}, '${o.table}', ${o.total})">
-                    <span class="order-select-box"></span>
+                    <span class="order-cb-box"></span>
                 </label>` : '';
 
             return `
                 <div class="order-card-wrap ${isSelected ? 'order-card-selected' : ''}"
                      data-status="${o.status}" data-type="${typeClass}">
-                    ${checkbox}
-                    <a href="/orders/${o.id}" class="order-card order-card-enhanced">
-                        <div class="order-card-top">
-                            <div class="order-card-left">
-                                <div class="order-card-table">${o.table}</div>
-                                <div class="order-card-badges">
-                                    <span class="order-type-chip order-type-chip--${typeClass}">${typeLabel}</span>
-                                    <span class="status-badge status-${o.status}">${o.status.charAt(0).toUpperCase()+o.status.slice(1)}</span>
-                                </div>
+                    <a href="/orders/${o.id}" class="order-card" style="position:relative">
+                        ${checkbox}
+                        <div class="order-card-header">
+                            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                                <span class="order-table">${o.table}</span>
+                                <span class="order-type-chip order-type-chip--${typeClass}">${typeLabel}</span>
+                                <span class="status-badge status-${o.status}">${o.status.charAt(0).toUpperCase()+o.status.slice(1)}</span>
                             </div>
-                            <div class="order-card-right">
-                                <div class="order-card-amount">₱${parseFloat(o.total).toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
-                                <div class="order-card-time">${o.time} · ${o.updated_at}</div>
-                            </div>
+                            <div class="order-time" style="${isCashier ? 'margin-right:32px' : ''}">${o.time} · ${o.updated_at}</div>
                         </div>
-                        <div class="order-card-divider"></div>
-                        <div class="order-card-bottom">
-                            <span class="order-card-count">${o.items_count} item${o.items_count !== 1 ? 's' : ''}</span>
-                            <div class="order-card-footer">${chips}${extra}</div>
-                        </div>
+                        <div class="order-card-items">${o.items_count} item(s) · ₱${parseFloat(o.total).toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
+                        <div class="order-card-footer">${chips}${extra}</div>
                     </a>
                 </div>`;
         }).join('');

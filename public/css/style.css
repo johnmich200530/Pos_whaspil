@@ -883,16 +883,13 @@ input[type="password"]::-webkit-textfield-decoration-container {
 /* ── Enhanced order card ─────────────────────────── */
 .order-card-wrap {
   position: relative;
-  display: flex;
-  align-items: stretch;
-  gap: 0;
   margin-bottom: 10px;
   border-radius: var(--radius);
   transition: box-shadow .2s;
 }
-.order-card-wrap.order-card-selected {
-  box-shadow: 0 0 0 2px var(--green);
-  border-radius: var(--radius);
+.order-card-wrap.order-card-selected .order-card {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(39,174,96,.25);
 }
 
 .order-card-enhanced {
@@ -932,41 +929,33 @@ input[type="password"]::-webkit-textfield-decoration-container {
   font-style: italic;
 }
 
-/* ── Select checkbox ─────────────────────────────── */
-.order-select-label {
+/* ── Select checkbox (inside card, top-right) ────── */
+.order-cb-label {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  cursor: pointer;
+  line-height: 0;
+}
+.order-cb-label input[type="checkbox"] { display: none; }
+
+.order-cb-box {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  flex-shrink: 0;
-  cursor: pointer;
-  background: var(--dark3);
-  border: 1px solid var(--border);
-  border-right: none;
-  border-radius: var(--radius) 0 0 var(--radius);
-  transition: background .2s;
-}
-.order-select-label:hover { background: var(--dark4); }
-
-.order-select-label input[type="checkbox"] { display: none; }
-
-.order-select-box {
   width: 20px;
   height: 20px;
   border: 2px solid var(--border);
   border-radius: 5px;
-  background: var(--dark2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--dark3);
   transition: background .15s, border-color .15s;
-  position: relative;
 }
-.order-select-label input:checked + .order-select-box {
+.order-cb-label input:checked + .order-cb-box {
   background: var(--green);
   border-color: var(--green);
 }
-.order-select-label input:checked + .order-select-box::after {
+.order-cb-label input:checked + .order-cb-box::after {
   content: '';
   display: block;
   width: 5px;
@@ -975,10 +964,6 @@ input[type="password"]::-webkit-textfield-decoration-container {
   border-top: none;
   border-left: none;
   transform: rotate(45deg) translate(-1px, -1px);
-}
-/* When checkbox present, adjust card border-radius */
-.order-card-wrap:has(.order-select-label) .order-card-enhanced {
-  border-radius: 0 var(--radius) var(--radius) 0;
 }
 
 .order-item-chip {
