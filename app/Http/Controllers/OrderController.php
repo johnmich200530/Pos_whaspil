@@ -172,6 +172,22 @@ class OrderController extends Controller
         $order->update(['Status' => $validated['status']]);
 
         if ($validated['status'] === 'cancelled') {
+            // Restore inventory for all items in the cancelled order
+            $order->load('orderItems.menu.inventory');
+            foreach ($order->orderItems as $item) {
+                $inventory = $item->menu->inventory ?? null;
+                if ($inventory) {
+                    $restoredQty = $inventory->Quantity + $item->Quantity;
+                    $inventory->update([
+                        'Quantity' => $restoredQty,
+                        'Status'   => $restoredQty <= 0 ? 'out_of_stock'
+                            : ($restoredQty < 10 ? 'low_stock' : 'in_stock'),
+                    ]);
+                    Menu::where('Inventory_ID', $inventory->Inventory_ID)
+                        ->update(['Availability' => $restoredQty > 0]);
+                }
+            }
+
             $this->audit('order.cancelled', 'Order cancelled for ' . $order->Table_number, $order->Table_number);
             return redirect()->route('orders.active')->with('success', 'Order cancelled.');
         }
