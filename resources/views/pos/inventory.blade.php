@@ -198,6 +198,7 @@
                 <label class="form-label">Category</label>
                 <select name="category" id="editCategory" class="form-input">
                     <option value="">Select…</option>
+                    <option value="Drinks">Drinks</option>
                     <option value="Dairy/Frozen">Dairy/Frozen</option>
                     <option value="Vegetables/Fresh">Vegetables/Fresh</option>
                     <option value="Sauce/Condiments">Sauce/Condiments</option>
