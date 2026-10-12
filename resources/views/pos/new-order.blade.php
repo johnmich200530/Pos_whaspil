@@ -302,7 +302,7 @@
             setTimeout(() => { toast.classList.add('toast-hide'); setTimeout(() => toast.style.display='none', 400); }, 3000);
         })
         .catch(() => alert('Something went wrong. Please try again.'))
-        .finally(() => { btn.disabled = false; btn.innerHTML = '🍳 Confirm &amp; Send to Kitchen'; });
+        .finally(() => { btn.disabled = false; btn.innerHTML = ' Confirm &amp; Send to Kitchen'; });
     }
 </script>
 @endpush
