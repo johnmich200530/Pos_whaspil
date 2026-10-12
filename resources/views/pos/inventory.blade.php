@@ -142,6 +142,7 @@
                 <label class="form-label">Category</label>
                 <select name="category" class="form-input" required>
                     <option value="" disabled selected>Select…</option>
+                    <option value="Drinks">Drinks</option>
                     <option value="Dairy/Frozen">Dairy/Frozen</option>
                     <option value="Vegetables/Fresh">Vegetables/Fresh</option>
                     <option value="Sauce/Condiments">Sauce/Condiments</option>
