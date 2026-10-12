@@ -30,7 +30,6 @@
                value="{{ $search ?? '' }}" autocomplete="off">
         <input type="hidden" name="status" id="invStatusInput" value="{{ request('status', 'all') }}">
         <input type="hidden" name="category" id="invCategoryInput" value="{{ request('category', 'all') }}">
-        <button type="submit" class="btn-primary btn-sm" style="width:auto;padding:8px 14px">Search</button>
     </form>
 
     {{-- Category filter tabs (same style as menu page) --}}
@@ -267,6 +266,15 @@
         document.getElementById('invCategoryInput').value = cat;
         document.getElementById('invFilterForm').submit();
     }
+
+    // Auto-submit search after user stops typing (400ms debounce)
+    let invSearchTimer;
+    document.getElementById('invSearch').addEventListener('input', function () {
+        clearTimeout(invSearchTimer);
+        invSearchTimer = setTimeout(() => {
+            document.getElementById('invFilterForm').submit();
+        }, 400);
+    });
 </script>
 @endpush
 @endsection
